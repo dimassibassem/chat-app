@@ -1,6 +1,6 @@
 import {Server} from 'socket.io'
 
-interface ServerToClientEvents {
+export interface ServerToClientEvents {
     broadcast: { emit(eventName: string, data: string) : void },
     emit(eventName: string, data: string) : void,
     on(createdMessage1: string, createdMessage: (msg: string) => void): void;
