@@ -4,6 +4,9 @@
   "extends": [
     "plugin:@typescript-eslint/recommended",
     // Uses the recommended rules from the @typescript-eslint/eslint-plugin
+    "eslint:recommended",
+    "plugin:@typescript-eslint/eslint-recommended",
+    "plugin:@typescript-eslint/recommended",
     "plugin:react/recommended",
     "airbnb",
     "plugin:react-hooks/recommended",
@@ -47,7 +50,9 @@
     ],
     "@typescript-eslint/no-var-requires": 0,
     "global-require": 0,
-    "react/jsx-props-no-spreading": "off"
+    "react/jsx-props-no-spreading": "off",
+    "no-undef": "off",
+    "@typescript-eslint/no-unused-vars": ["error"]
   },
   "settings": {
     "react": {
