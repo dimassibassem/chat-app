@@ -68,7 +68,7 @@ const Home: NextPage = () => {
     const id = useId()
     const ref = useRef() as LegacyRef<HTMLInputElement> & { current: HTMLDivElement }
     useEffect(() => {
-        ref.current.scrollIntoView({behavior: "smooth"})
+        ref.current?.scrollIntoView({behavior: "smooth"})
     }, [messages, someoneIsTyping])
     return (
         <div className="flex items-center p-4 mx-auto min-h-screen justify-center bg-purple-500">
