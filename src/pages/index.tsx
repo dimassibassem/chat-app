@@ -1,5 +1,5 @@
 import io, {Socket} from "socket.io-client";
-import {KeyboardEvent, useState, useEffect, useId} from "react";
+import {KeyboardEvent, LegacyRef, useEffect, useId, useRef, useState} from "react";
 import {NextPage} from "next";
 
 let socket: Socket;
@@ -51,21 +51,25 @@ const Home: NextPage = () => {
     };
 
     const handleKeypress = (e: KeyboardEvent<HTMLElement>) => {
+        const time = setTimeout(() => {
+            socket.emit("stopTyping", {author: chosenUsername});
+        }, 1000)
         socket.emit("typing", {author: chosenUsername});
         if (e.keyCode === 13) {
             if (message) {
-                sendMessage();
                 socket.emit("stopTyping", {author: chosenUsername});
+                sendMessage();
+                return () => clearTimeout(time);
             }
         }
-        setTimeout(() => {
-            socket.emit("stopTyping", {author: chosenUsername});
-        }, 1000);
-
+        return () => clearTimeout(time);
     };
 
     const id = useId()
-
+    const ref = useRef() as LegacyRef<HTMLInputElement> & { current: HTMLDivElement }
+    useEffect(() => {
+        ref.current.scrollIntoView({behavior: "smooth"})
+    }, [messages, someoneIsTyping])
     return (
         <div className="flex items-center p-4 mx-auto min-h-screen justify-center bg-purple-500">
             <main className="gap-4 flex flex-col items-center justify-center w-full h-full">
@@ -110,11 +114,15 @@ const Home: NextPage = () => {
                                 {Object.keys(someoneIsTyping).map((user) => {
                                         // @ts-ignore
                                         if (someoneIsTyping[user]) {
-                                            return <div key={id + user}>{user} is typing...</div>
+                                            return <div className="w-full py-1 px-2 border-b border-gray-200" key={id + user}>{user} is typing...</div>
                                         }
-                                        return null
+                                        return  <div key={id}
+                                            className="h-8 py-1 px-2"
+                                        />
                                     }
                                 )}
+                                <div ref={ref}/>
+
                             </div>
                             <div className="border-t border-gray-300 w-full flex rounded-bl-md">
                                 <input
