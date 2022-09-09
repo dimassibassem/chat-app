@@ -50,26 +50,35 @@ const Home: NextPage = () => {
         setMessage("");
     };
 
+
+    const timer = () => setTimeout(() => {
+        socket.emit("stopTyping", {author: chosenUsername});
+    }, 2000)
+
     const handleKeypress = (e: KeyboardEvent<HTMLElement>) => {
-        const time = setTimeout(() => {
-            socket.emit("stopTyping", {author: chosenUsername});
-        }, 1000)
+        // eslint-disable-next-line @typescript-eslint/no-empty-function
+        let id = window.setTimeout(() => {}, 0);
+        // eslint-disable-next-line no-plusplus
+        while (id--) {
+            window.clearTimeout(id); // will do nothing if no timeout with id is present
+        }
         socket.emit("typing", {author: chosenUsername});
         if (e.keyCode === 13) {
             if (message) {
                 socket.emit("stopTyping", {author: chosenUsername});
                 sendMessage();
-                return () => clearTimeout(time);
+                return () => clearTimeout(timer());
             }
         }
-        return () => clearTimeout(time);
+        timer()
+        return () => clearTimeout(timer());
     };
 
     const id = useId()
     const ref = useRef() as LegacyRef<HTMLInputElement> & { current: HTMLDivElement }
-    useEffect(() => {
-        ref.current?.scrollIntoView({behavior: "smooth"})
-    }, [messages, someoneIsTyping])
+
+    ref.current?.scrollIntoView({behavior: "smooth"})
+
     return (
         <div className="flex items-center p-4 mx-auto min-h-screen justify-center bg-purple-500">
             <main className="gap-4 flex flex-col items-center justify-center w-full h-full">
@@ -78,22 +87,26 @@ const Home: NextPage = () => {
                         <h3 className="font-bold text-white text-xl">
                             How people should call you?
                         </h3>
-                        <input
-                            type="text"
-                            placeholder="Identity..."
-                            value={username}
-                            className="p-3 rounded-md outline-none"
-                            onChange={(e) => setUsername(e.target.value)}
-                        />
-                        <button
-                            type="button"
-                            onClick={() => {
-                                setChosenUsername(username);
-                            }}
-                            className="bg-white rounded-md px-4 py-2 text-xl"
-                        >
-                            Go!
-                        </button>
+                        <form>
+                            <div className="grid grid-col-1">
+                                <input
+                                    type="text"
+                                    placeholder="Identity..."
+                                    value={username}
+                                    className="p-3 rounded-md outline-none"
+                                    onChange={(e) => setUsername(e.target.value)}
+                                />
+                                <button
+                                    type="submit"
+                                    onClick={() => {
+                                        setChosenUsername(username);
+                                    }}
+                                    className="bg-white mt-8 rounded-md mx-10 py-2 text-xl"
+                                >
+                                    Go!
+                                </button>
+                            </div>
+                        </form>
                     </>
                 ) : (
                     <>
@@ -114,10 +127,11 @@ const Home: NextPage = () => {
                                 {Object.keys(someoneIsTyping).map((user) => {
                                         // @ts-ignore
                                         if (someoneIsTyping[user]) {
-                                            return <div className="w-full py-1 px-2 border-b border-gray-200" key={id + user}>{user} is typing...</div>
+                                            return <div className="w-full py-1 px-2 border-b border-gray-200"
+                                                        key={id + user}>{user} is typing...</div>
                                         }
-                                        return  <div key={id}
-                                            className="h-8 py-1 px-2"
+                                        return <div key={id + Math.random()}
+                                                    className="h-8 py-1 px-2"
                                         />
                                     }
                                 )}
