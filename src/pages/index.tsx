@@ -1,5 +1,5 @@
 import io, {Socket} from "socket.io-client";
-import React, {useState, useEffect, useId} from "react";
+import {KeyboardEvent, useState, useEffect, useId} from "react";
 import {NextPage} from "next";
 
 let socket: Socket;
@@ -7,6 +7,7 @@ let socket: Socket;
 type Message = {
     author: string;
     message: string;
+    createdAt: Date;
 };
 
 const Home: NextPage = () => {
@@ -24,27 +25,25 @@ const Home: NextPage = () => {
         socket.on("newIncomingMessage", (msg) => {
             setMessages((currentMsg) => [
                 ...currentMsg,
-                {author: msg.author, message: msg.message},
+                {author: msg.author, message: msg.message, createdAt: msg.createdAt},
             ]);
-            // console.log(messages);
         });
     };
 
     useEffect(() => {
-        socketInitializer().catch((err) => console.log(err));
+        socketInitializer()
     }, []);
 
     const sendMessage = async () => {
-        socket.emit("createdMessage", {author: chosenUsername, message});
+        socket.emit("createdMessage", {author: chosenUsername, message, createdAt: new Date()});
         setMessages((currentMsg) => [
             ...currentMsg,
-            {author: chosenUsername, message},
+            {author: chosenUsername, message, createdAt: new Date()},
         ]);
         setMessage("");
     };
 
-    const handleKeypress = (e: React.KeyboardEvent<HTMLElement>) => {
-        // it triggers by pressing the enter key
+    const handleKeypress = (e: KeyboardEvent<HTMLElement>) => {
         if (e.keyCode === 13) {
             if (message) {
                 sendMessage();
@@ -53,7 +52,6 @@ const Home: NextPage = () => {
     };
 
     const id = useId()
-
     return (
         <div className="flex items-center p-4 mx-auto min-h-screen justify-center bg-purple-500">
             <main className="gap-4 flex flex-col items-center justify-center w-full h-full">
