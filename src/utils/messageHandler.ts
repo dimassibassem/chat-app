@@ -1,15 +1,14 @@
 import {Server} from 'socket.io'
 
 export interface ServerToClientEvents {
-    broadcast: { emit(eventName: string, data: string) : void },
-    emit(eventName: string, data: string) : void,
-    on(createdMessage1: string, createdMessage: (msg: string) => void): void;
+    broadcast: { emit(event: string, data: object) : void },
+    emit(event: string, data: object) : void,
+    on(event: string, createdMessage: (msg: object) => void): void;
 }
 
 export default (io: Server, socket: ServerToClientEvents) => {
-    const createdMessage = (msg: string) => {
+    socket.on("createdMessage", (msg: object) => {
         socket.broadcast.emit("newIncomingMessage", msg);
-    };
 
-    socket.on("createdMessage", createdMessage);
+    });
 };
