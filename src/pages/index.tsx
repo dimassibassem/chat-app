@@ -15,6 +15,7 @@ const Home: NextPage = () => {
     const [chosenUsername, setChosenUsername] = useState("");
     const [message, setMessage] = useState("");
     const [messages, setMessages] = useState<Array<Message>>([]);
+    const [someoneIsTyping, setSomeoneIsTyping] = useState({});
 
     const socketInitializer = async () => {
         // We just call it because we don't need anything else out of it
@@ -28,6 +29,12 @@ const Home: NextPage = () => {
                 {author: msg.author, message: msg.message, createdAt: msg.createdAt},
             ]);
         });
+        socket.on("typing", (user) => {
+            setSomeoneIsTyping((current) => ({...current, [user]: true}));
+        });
+        socket.on("stopTyping", (user) => {
+            setSomeoneIsTyping((current) => ({...current, [user]: false}));
+        })
     };
 
     useEffect(() => {
@@ -44,14 +51,21 @@ const Home: NextPage = () => {
     };
 
     const handleKeypress = (e: KeyboardEvent<HTMLElement>) => {
+        socket.emit("typing", {author: chosenUsername});
         if (e.keyCode === 13) {
             if (message) {
                 sendMessage();
+                socket.emit("stopTyping", {author: chosenUsername});
             }
         }
+        setTimeout(() => {
+            socket.emit("stopTyping", {author: chosenUsername});
+        }, 1000);
+
     };
 
     const id = useId()
+
     return (
         <div className="flex items-center p-4 mx-auto min-h-screen justify-center bg-purple-500">
             <main className="gap-4 flex flex-col items-center justify-center w-full h-full">
@@ -92,6 +106,15 @@ const Home: NextPage = () => {
                                         {msg.author} : {msg.message}
                                     </div>
                                 ))}
+
+                                {Object.keys(someoneIsTyping).map((user) => {
+                                        // @ts-ignore
+                                        if (someoneIsTyping[user]) {
+                                            return <div key={id + user}>{user} is typing...</div>
+                                        }
+                                        return null
+                                    }
+                                )}
                             </div>
                             <div className="border-t border-gray-300 w-full flex rounded-bl-md">
                                 <input

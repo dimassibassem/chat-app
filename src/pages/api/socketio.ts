@@ -20,7 +20,14 @@ const ioHandler = (req: NextApiRequest,
     // Define actions inside
     io.on("connection", (socket: ServerToClientEvents) => {
         messageHandler(io, socket);
-
+        socket.on("typing", (data: object) => {
+            // @ts-ignore
+            socket.broadcast.emit("typing", data.author);
+        })
+        socket.on("stopTyping", (data: object) => {
+            // @ts-ignore
+            socket.broadcast.emit("stopTyping", data.author);
+        })
     });
 
     console.log("Setting up socket");
