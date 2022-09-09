@@ -1,6 +1,8 @@
 import io, {Socket} from "socket.io-client";
 import {KeyboardEvent, LegacyRef, useEffect, useId, useRef, useState} from "react";
 import {NextPage} from "next";
+import {useSession} from "next-auth/react";
+import LoginBtn from "@/pages/LoginBtn";
 
 let socket: Socket;
 
@@ -16,6 +18,7 @@ const Home: NextPage = () => {
     const [message, setMessage] = useState("");
     const [messages, setMessages] = useState<Array<Message>>([]);
     const [someoneIsTyping, setSomeoneIsTyping] = useState({});
+    const {data: session} = useSession()
 
     const socketInitializer = async () => {
         // We just call it because we don't need anything else out of it
@@ -57,7 +60,8 @@ const Home: NextPage = () => {
 
     const handleKeypress = (e: KeyboardEvent<HTMLElement>) => {
         // eslint-disable-next-line @typescript-eslint/no-empty-function
-        let id = window.setTimeout(() => {}, 0);
+        let id = window.setTimeout(() => {
+        }, 0);
         // eslint-disable-next-line no-plusplus
         while (id--) {
             window.clearTimeout(id); // will do nothing if no timeout with id is present
@@ -78,37 +82,19 @@ const Home: NextPage = () => {
     const ref = useRef() as LegacyRef<HTMLInputElement> & { current: HTMLDivElement }
 
     ref.current?.scrollIntoView({behavior: "smooth"})
+    useEffect(() => {
+        if (session) {
+            setUsername(session.user?.name as string)
+            setChosenUsername(session.user?.name as string)
+        }
+    }, [session])
 
     return (
         <div className="flex items-center p-4 mx-auto min-h-screen justify-center bg-purple-500">
             <main className="gap-4 flex flex-col items-center justify-center w-full h-full">
-                {!chosenUsername ? (
-                    <>
-                        <h3 className="font-bold text-white text-xl">
-                            How people should call you?
-                        </h3>
-                        <form>
-                            <div className="grid grid-col-1">
-                                <input
-                                    type="text"
-                                    placeholder="Identity..."
-                                    value={username}
-                                    className="p-3 rounded-md outline-none"
-                                    onChange={(e) => setUsername(e.target.value)}
-                                />
-                                <button
-                                    type="submit"
-                                    onClick={() => {
-                                        setChosenUsername(username);
-                                    }}
-                                    className="bg-white mt-8 rounded-md mx-10 py-2 text-xl"
-                                >
-                                    Go!
-                                </button>
-                            </div>
-                        </form>
-                    </>
-                ) : (
+                <LoginBtn/>
+
+                {chosenUsername  ? (
                     <>
                         <p className="font-bold text-white text-xl">
                             Your username: {username}
@@ -162,7 +148,34 @@ const Home: NextPage = () => {
                             </div>
                         </div>
                     </>
-                )}
+                ) : (
+                    <>
+                        <h3 className="font-bold text-white text-xl">
+                            How people should call you?
+                        </h3>
+                        <form>
+                            <div className="grid grid-col-1">
+                                <input
+                                    type="text"
+                                    placeholder="Identity..."
+                                    value={username}
+                                    className="p-3 rounded-md outline-none"
+                                    onChange={(e) => setUsername(e.target.value)}
+                                />
+                                <button
+                                    type="submit"
+                                    onClick={() => {
+                                        setChosenUsername(username);
+                                    }}
+                                    className="bg-white mt-8 rounded-md mx-10 py-2 text-xl"
+                                >
+                                    Go!
+                                </button>
+                            </div>
+                        </form>
+                    </>
+                )
+                }
             </main>
         </div>
     );
