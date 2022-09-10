@@ -1,32 +1,27 @@
 const load = require('audio-loader')
 
+let incomingMsg: AudioBuffer | null
+let outgoingMsg: AudioBuffer | null
+
+(async () => {
+    incomingMsg = await load(`incomingMessage.mp3`)
+    outgoingMsg = await load(`outgoingMessage.mp3`)
+})()
+
 export function incomingMessage() {
-    load('incomingMessage.mp3').then((buffer: any) => {
-        const audio = new AudioContext()
-        const source = audio.createBufferSource()
-        source.buffer = buffer
-        source.connect(audio.destination)
-        source.start()
-    })
+    const audio = new AudioContext()
+    const source = audio.createBufferSource()
+    source.buffer = incomingMsg
+    source.connect(audio.destination)
+    source.start()
 }
 
 export function outgoingMessage() {
-    load('outgoingMessage.mp3').then((buffer: any) => {
-        const audio = new AudioContext()
-        const source = audio.createBufferSource()
-        source.buffer = buffer
-        source.connect(audio.destination)
-        source.start()
-    })
+    const audio = new AudioContext()
+    const source = audio.createBufferSource()
+    source.buffer = outgoingMsg
+    source.connect(audio.destination)
+    source.start()
 }
 
-export function typingMessage() {
-    load('typingMessage.mp3').then((buffer: any) => {
-        const audio = new AudioContext()
-        const source = audio.createBufferSource()
-        source.buffer = buffer
-        source.connect(audio.destination)
-        source.start()
-    })
-}
 
