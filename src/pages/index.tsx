@@ -3,6 +3,7 @@ import {KeyboardEvent, LegacyRef, useEffect, useId, useRef, useState} from "reac
 import {NextPage} from "next";
 import {useSession} from "next-auth/react";
 import LoginBtn from "@/pages/LoginBtn";
+import {incomingMessage, outgoingMessage, typingMessage} from "@/audio/audio";
 
 let socket: Socket;
 
@@ -19,20 +20,23 @@ const Home: NextPage = () => {
     const [messages, setMessages] = useState<Array<Message>>([]);
     const [someoneIsTyping, setSomeoneIsTyping] = useState({});
     const {data: session} = useSession()
-
     const socketInitializer = async () => {
         // We just call it because we don't need anything else out of it
+
         await fetch("/api/socketio");
 
         socket = io();
 
-        socket.on("newIncomingMessage", (msg) => {
+        socket.on("newIncomingMessage", async (msg) => {
+
+            incomingMessage()
             setMessages((currentMsg) => [
                 ...currentMsg,
                 {author: msg.author, message: msg.message, createdAt: msg.createdAt},
             ]);
         });
-        socket.on("typing", (user) => {
+        socket.on("typing", async (user) => {
+            typingMessage()
             setSomeoneIsTyping((current) => ({...current, [user]: true}));
         });
         socket.on("stopTyping", (user) => {
@@ -46,6 +50,7 @@ const Home: NextPage = () => {
 
     const sendMessage = async () => {
         socket.emit("createdMessage", {author: chosenUsername, message, createdAt: new Date()});
+        outgoingMessage()
         setMessages((currentMsg) => [
             ...currentMsg,
             {author: chosenUsername, message, createdAt: new Date()},
@@ -94,7 +99,7 @@ const Home: NextPage = () => {
             <main className="gap-4 flex flex-col items-center justify-center w-full h-full">
                 <LoginBtn/>
 
-                {chosenUsername  ? (
+                {chosenUsername ? (
                     <>
                         <p className="font-bold text-white text-xl">
                             Your username: {username}
