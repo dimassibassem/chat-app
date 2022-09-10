@@ -12,17 +12,21 @@ datasource db {
 
 model User {
   id        Int      @default(autoincrement()) @id
-  createdAt DateTime @default(now())
   email     String   @unique
   name      String?
-  messages  Message[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+sentMessages Message[] @relation("sentMessages")
+receivedMessages Message[] @relation("receivedMessages")
 }
 
 model Message {
   id        Int      @default(autoincrement()) @id
+  text      String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  content   String
-  user    User     @relation(fields: [userId], references: [id])
-  userId  Int
+  senderId  Int
+  receiverId Int
+  sender User @relation("sentMessages",fields: [senderId], references: [id])
+  receiver User @relation("receivedMessages",fields: [receiverId], references: [id])
 }

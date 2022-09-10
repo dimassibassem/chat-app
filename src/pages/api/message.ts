@@ -5,33 +5,34 @@ import prisma from '@/utils/prismaClient';
 const messageHandler = async (req: NextApiRequest,
                               res: NextApiResponse) => {
 
-    if (req.method === 'POST') {
-        const {email, message} = req.body as { email: string, message: string };
+    const {email, message, receiverId} = req.body as { email: string, message: string | null, receiverId: number };
 
-        const user = await prisma.user.findFirst({
-            where: {
-                email
-            }
-        });
+    const user = await prisma.user.findFirst({
+        where: {
+            email
+        }
+    });
 
-        if (user) {
-            const newMessage = await prisma.message.create({
-                data: {
-                    content: message,
-                    user: {
-                        connect: {
-                            id: user?.id
-                        }
+    if (user) {
+        await prisma.message.create({
+            data: {
+                text: message,
+                sender: {
+                    connect: {
+                        id: user?.id
+                    }
+                },
+                receiver: {
+                    connect: {
+                        id: receiverId
                     }
                 }
-            });
-            res.status(201).json(newMessage);
-        }
-
-    } else {
-        res.status(405).end();
+            }
+        });
+        return res.status(200).json({message: 'Message sent'})
     }
 
+    return res.status(400).json({message: 'User not found'})
 }
 
 export default messageHandler
