@@ -3,7 +3,7 @@ import {KeyboardEvent, LegacyRef, useEffect, useId, useRef, useState} from "reac
 import {NextPage} from "next";
 import {useSession} from "next-auth/react";
 import LoginBtn from "@/pages/LoginBtn";
-import {incomingMessage, outgoingMessage, typingMessage} from "@/audio/audio";
+import {incomingMessage, outgoingMessage} from "@/audio/audio";
 
 let socket: Socket;
 
@@ -36,7 +36,6 @@ const Home: NextPage = () => {
             ]);
         });
         socket.on("typing", async (user) => {
-            typingMessage()
             setSomeoneIsTyping((current) => ({...current, [user]: true}));
         });
         socket.on("stopTyping", (user) => {
