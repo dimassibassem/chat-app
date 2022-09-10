@@ -1,13 +1,9 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  reactStrictMode: true,
-  experimental: {
-    newNextLinkBehavior: true,
-    images: {
-      allowFutureImage: true
+    reactStrictMode: true,
+    experimental: {
+        newNextLinkBehavior: true
     }
-  }
 }
-
 
 module.exports = nextConfig
