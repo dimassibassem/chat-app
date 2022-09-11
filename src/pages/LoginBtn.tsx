@@ -6,7 +6,7 @@ import {useEffect} from "react";
 
 
 const addUserIfNotExist = async (session: Session) => {
-    await axios.post("/api/user", {name: session.user?.name, email: session.user?.email})
+    await axios.post("/api/user", {name: session.user?.name, email: session.user?.email, image: session.user?.image})
 }
 
 const LoginBtn: NextComponentType = () => {
