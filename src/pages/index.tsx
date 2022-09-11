@@ -3,6 +3,7 @@ import {KeyboardEvent, LegacyRef, useEffect, useId, useRef, useState} from "reac
 import {NextPage} from "next";
 import {useSession} from "next-auth/react";
 import {useRouter} from "next/router";
+import axios from "axios";
 import LoginBtn from "@/pages/LoginBtn";
 import {incomingMessage, outgoingMessage} from "@/audio/audio";
 
@@ -12,6 +13,8 @@ type Message = {
     author: string;
     message: string;
     createdAt: Date;
+    senderId: number;
+    receiverId: number;
 };
 
 const Home: NextPage = () => {
@@ -22,6 +25,14 @@ const Home: NextPage = () => {
     const [someoneIsTyping, setSomeoneIsTyping] = useState({});
     const [isAdmin, setIsAdmin] = useState(false);
     const {data: session} = useSession()
+    const [connectedUser, setConnectedUser] = useState();
+    const getUser = async () => {
+        const res = await axios.post("/api/findUser", {
+            email: session?.user?.email
+        });
+        setConnectedUser(res.data);
+    }
+
     const socketInitializer = async () => {
         // We just call it because we don't need anything else out of it
 
@@ -30,11 +41,10 @@ const Home: NextPage = () => {
         socket = io();
 
         socket.on("newIncomingMessage", async (msg) => {
-
             incomingMessage()
             setMessages((currentMsg) => [
                 ...currentMsg,
-                {author: msg.author, message: msg.message, createdAt: msg.createdAt},
+                msg,
             ]);
         });
         socket.on("typing", async (user) => {
@@ -47,14 +57,23 @@ const Home: NextPage = () => {
 
     useEffect(() => {
         socketInitializer()
+        getUser()
     }, []);
 
     const sendMessage = async () => {
-        socket.emit("createdMessage", {author: chosenUsername, message, createdAt: new Date()});
+        socket.emit("createdMessage", {
+            author: chosenUsername,
+            message,
+            // @ts-ignore
+            senderId: connectedUser.id,
+            receiverId: 29,
+            createdAt: new Date()
+        });
         outgoingMessage()
         setMessages((currentMsg) => [
             ...currentMsg,
-            {author: chosenUsername, message, createdAt: new Date()},
+            // @ts-ignore
+            {author: chosenUsername, message, senderId: connectedUser.id, receiverId: 29, createdAt: new Date()},
         ]);
         setMessage("");
     };
@@ -100,7 +119,7 @@ const Home: NextPage = () => {
 
     useEffect(() => {
         if (isAdmin) {
-      router.push("/admin")
+            router.push("/admin")
         }
     }, [isAdmin, router])
 
