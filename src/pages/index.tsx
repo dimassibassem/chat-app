@@ -3,14 +3,12 @@ import {KeyboardEvent, LegacyRef, SetStateAction, useEffect, useId, useRef, useS
 import {NextPage} from "next";
 import {useSession} from "next-auth/react";
 import {useRouter} from "next/router";
-import axios from "axios";
 import LoginBtn from "@/pages/LoginBtn";
 import {incomingMessage, outgoingMessage} from "@/audio/audio";
 import {Message, User} from "@/utils/types";
-import {handleKeypress} from "@/utils";
+import {getUser, handleKeypress} from "@/utils";
 
 let socket: Socket;
-
 
 const Home: NextPage = () => {
     const [username, setUsername] = useState("");
@@ -19,14 +17,11 @@ const Home: NextPage = () => {
     const [messages, setMessages] = useState<Array<Message>>([]);
     const [someoneIsTyping, setSomeoneIsTyping] = useState({});
     const [isAdmin, setIsAdmin] = useState(false);
-    const {data: session} = useSession()
     const [connectedUser, setConnectedUser] = useState() as [User, (user: SetStateAction<User>) => void];
-    const getUser = async () => {
-        const res = await axios.post("/api/findUser", {
-            email: session?.user?.email
-        });
-        setConnectedUser(res.data);
-    }
+    const {data: session} = useSession()
+    const router = useRouter()
+    const id = useId()
+    const ref = useRef() as LegacyRef<HTMLInputElement> & { current: HTMLDivElement }
 
     const socketInitializer = async () => {
         // We just call it because we don't need anything else out of it
@@ -50,9 +45,6 @@ const Home: NextPage = () => {
         })
     };
 
-
-
-
     const sendMessage = async () => {
         socket.emit("createdMessage", {
             author: chosenUsername,
@@ -64,55 +56,24 @@ const Home: NextPage = () => {
         outgoingMessage()
         setMessages((currentMsg) => [
             ...currentMsg,
-            // @ts-ignore
             {author: chosenUsername, message, senderId: connectedUser.id, receiverId: 29, createdAt: new Date()},
         ]);
         setMessage("");
     };
 
 
-    // const timer = () => setTimeout(() => {
-    //     socket.emit("stopTyping", {author: chosenUsername});
-    // }, 2000)
-
-    // const handleKeypress = (e: KeyboardEvent<HTMLElement>) => {
-    //     // eslint-disable-next-line @typescript-eslint/no-empty-function
-    //     let id = window.setTimeout(() => {
-    //     }, 0);
-    //     // eslint-disable-next-line no-plusplus
-    //     while (id--) {
-    //         window.clearTimeout(id); // will do nothing if no timeout with id is present
-    //     }
-    //     socket.emit("typing", {author: chosenUsername});
-    //     if (e.keyCode === 13) {
-    //         if (message) {
-    //             socket.emit("stopTyping", {author: chosenUsername});
-    //             sendMessage();
-    //             return () => clearTimeout(timer());
-    //         }
-    //     }
-    //     timer()
-    //     return () => clearTimeout(timer());
-    // };
-
     const handleKeypressFunction = (e: KeyboardEvent<HTMLElement>) => {
         handleKeypress(e, chosenUsername, socket, message, sendMessage)
     }
 
-    const id = useId()
-    const ref = useRef() as LegacyRef<HTMLInputElement> & { current: HTMLDivElement }
-
-    ref.current?.scrollIntoView({behavior: "smooth"})
     useEffect(() => {
         if (session) {
             setUsername(session.user?.name as string)
             setChosenUsername(session.user?.name as string)
             setIsAdmin(session.user?.email === process.env.NEXT_PUBLIC_ADMIN_EMAIL)
-            getUser()
+            getUser(session, setConnectedUser)
         }
     }, [session])
-
-    const router = useRouter();
 
     useEffect(() => {
         if (isAdmin) {
@@ -122,6 +83,8 @@ const Home: NextPage = () => {
     useEffect(() => {
         socketInitializer()
     }, []);
+
+    ref.current?.scrollIntoView({behavior: "smooth"})
 
     return (
         <div className="flex items-center p-4 mx-auto min-h-screen justify-center bg-purple-500">
