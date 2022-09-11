@@ -16,7 +16,7 @@ const messageHandler = async (req: NextApiRequest,
     if (user) {
         await prisma.message.create({
             data: {
-                text: message,
+                content: message,
                 sender: {
                     connect: {
                         id: user?.id
