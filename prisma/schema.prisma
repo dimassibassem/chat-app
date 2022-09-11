@@ -14,6 +14,7 @@ model User {
   id        Int      @default(autoincrement()) @id
   email     String   @unique
   name      String?
+  image     String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 sentMessages Message[] @relation("sentMessages")
@@ -22,7 +23,7 @@ receivedMessages Message[] @relation("receivedMessages")
 
 model Message {
   id        Int      @default(autoincrement()) @id
-  text      String
+  content      String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   senderId  Int
