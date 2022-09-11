@@ -5,10 +5,29 @@ import prisma from '@/utils/prismaClient';
 const usersWithMessages = async (req: NextApiRequest,
                                  res: NextApiResponse) => {
 
-   const data = await prisma.user.findMany({
+    const data = await prisma.user.findMany({
+        where: {
+            email: {
+                not: process.env.NEXT_PUBLIC_ADMIN_EMAIL
+            }
+        },
         include: {
-            sentMessages: true,
-            receivedMessages: true
+            receivedMessages: {
+                select: {
+                    id: true,
+                    content: true,
+                    createdAt: true,
+                    updatedAt: true,
+                }
+            },
+            sentMessages: {
+                select: {
+                    id: true,
+                    content: true,
+                    createdAt: true,
+                    updatedAt: true,
+                }
+            }
         }
     })
 
