@@ -4,25 +4,9 @@ import {KeyboardEvent, LegacyRef, SetStateAction, useEffect, useId, useRef, useS
 import io, {Socket} from "socket.io-client";
 import {useSession} from "next-auth/react";
 import {incomingMessage, outgoingMessage} from "@/audio/audio";
+import {User, Message} from "@/utils/types";
+import {handleKeypress} from "@/utils";
 
-type Message = {
-    id?: number;
-    author?: string;
-    createdAt?: Date;
-    updatedAt?: Date;
-    content?: string;
-    message?: string;
-    senderId?: number;
-    receiverId?: number;
-}
-type User = {
-    id?: number;
-    name?: string;
-    email?: string;
-    image?: string;
-    createdAt?: Date;
-    updatedAt?: Date;
-}
 
 let socket: Socket;
 const Admin: NextPage = () => {
@@ -31,7 +15,7 @@ const Admin: NextPage = () => {
     const [messages, setMessages] = useState<Array<Message>>([]);
     const [someoneIsTyping, setSomeoneIsTyping] = useState({});
     const [chatWith, setChatWith] = useState() as [User, (user: SetStateAction<User>) => void];
-    const [connectedUser, setConnectedUser] = useState();
+    const [connectedUser, setConnectedUser] = useState() as [User, (user: SetStateAction<User>) => void];
     const {data: session} = useSession()
     const getUser = async () => {
         const res = await axios.post("/api/findUser", {
@@ -63,12 +47,6 @@ const Admin: NextPage = () => {
         })
     };
 
-    useEffect(() => {
-        socketInitializer()
-    }, []);
-    useEffect(() => {
-        getUser()
-    }, [session])
 
     const id = useId();
     const ref = useRef() as LegacyRef<HTMLInputElement> & { current: HTMLDivElement }
@@ -84,14 +62,12 @@ const Admin: NextPage = () => {
             author: "Admin",
             message,
             receiverId: chatWith.id,
-            // @ts-ignore
             senderId: connectedUser.id,
             createdAt: new Date()
         });
         outgoingMessage()
         setMessages((currentMsg) => [
             ...currentMsg,
-            // @ts-ignore
             {author: "Admin", message, senderId: connectedUser.id, receiverId: chatWith.id, createdAt: new Date()},
         ]);
         setMessage("");
@@ -102,36 +78,21 @@ const Admin: NextPage = () => {
         const res = await axios.get("/api/usersWithMessages")
         setUsers(res.data)
     }
+
+
+    const handleKeypressFunction = (e: KeyboardEvent<HTMLElement>) => {
+        handleKeypress(e, "admin", socket, message, sendMessage)
+    }
+
     useEffect(() => {
-        getUsers()
-    }, [])
-
-
-    const timer = () => setTimeout(() => {
-        socket.emit("stopTyping", {author: "Admin"});
-    }, 2000)
-
-    const handleKeypress = (e: KeyboardEvent<HTMLElement>) => {
-        // eslint-disable-next-line @typescript-eslint/no-empty-function
-        let timerId = window.setTimeout(() => {
-        }, 0);
-        // eslint-disable-next-line no-plusplus
-        while (timerId--) {
-            window.clearTimeout(timerId); // will do nothing if no timeout with id is present
+        socketInitializer()
+    }, []);
+    useEffect(() => {
+        if (session) {
+            getUser()
+            getUsers()
         }
-        socket.emit("typing", {author: "Admin"});
-        if (e.keyCode === 13) {
-            if (message) {
-                sendMessage();
-                socket.emit("stopTyping", {author: "Admin"});
-                return () => clearTimeout(timer());
-            }
-        }
-        timer()
-        return () => clearTimeout(timer());
-    };
-    console.log(messages);
-    console.log("connectedUser", connectedUser);
+    }, [session])
     if (session) {
         return (
             <div className="flex items-center p-4 mx-auto min-h-screen justify-center bg-purple-500">
@@ -189,7 +150,7 @@ const Admin: NextPage = () => {
                                     value={message}
                                     className="outline-none py-2 px-2 rounded-bl-md flex-1"
                                     onChange={(e) => setMessage(e.target.value)}
-                                    onKeyDown={handleKeypress}
+                                    onKeyDown={handleKeypressFunction}
                                 />
                                 <div
                                     className="border-l border-gray-300 flex justify-center items-center  rounded-br-md group hover:bg-purple-500 transition-all">
