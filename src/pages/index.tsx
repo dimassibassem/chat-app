@@ -1,21 +1,16 @@
 import io, {Socket} from "socket.io-client";
-import {KeyboardEvent, LegacyRef, useEffect, useId, useRef, useState} from "react";
+import {KeyboardEvent, LegacyRef, SetStateAction, useEffect, useId, useRef, useState} from "react";
 import {NextPage} from "next";
 import {useSession} from "next-auth/react";
 import {useRouter} from "next/router";
 import axios from "axios";
 import LoginBtn from "@/pages/LoginBtn";
 import {incomingMessage, outgoingMessage} from "@/audio/audio";
+import {Message, User} from "@/utils/types";
+import {handleKeypress} from "@/utils";
 
 let socket: Socket;
 
-type Message = {
-    author: string;
-    message: string;
-    createdAt: Date;
-    senderId: number;
-    receiverId: number;
-};
 
 const Home: NextPage = () => {
     const [username, setUsername] = useState("");
@@ -25,7 +20,7 @@ const Home: NextPage = () => {
     const [someoneIsTyping, setSomeoneIsTyping] = useState({});
     const [isAdmin, setIsAdmin] = useState(false);
     const {data: session} = useSession()
-    const [connectedUser, setConnectedUser] = useState();
+    const [connectedUser, setConnectedUser] = useState() as [User, (user: SetStateAction<User>) => void];
     const getUser = async () => {
         const res = await axios.post("/api/findUser", {
             email: session?.user?.email
@@ -55,16 +50,13 @@ const Home: NextPage = () => {
         })
     };
 
-    useEffect(() => {
-        socketInitializer()
-        getUser()
-    }, []);
+
+
 
     const sendMessage = async () => {
         socket.emit("createdMessage", {
             author: chosenUsername,
             message,
-            // @ts-ignore
             senderId: connectedUser.id,
             receiverId: 29,
             createdAt: new Date()
@@ -79,29 +71,33 @@ const Home: NextPage = () => {
     };
 
 
-    const timer = () => setTimeout(() => {
-        socket.emit("stopTyping", {author: chosenUsername});
-    }, 2000)
+    // const timer = () => setTimeout(() => {
+    //     socket.emit("stopTyping", {author: chosenUsername});
+    // }, 2000)
 
-    const handleKeypress = (e: KeyboardEvent<HTMLElement>) => {
-        // eslint-disable-next-line @typescript-eslint/no-empty-function
-        let id = window.setTimeout(() => {
-        }, 0);
-        // eslint-disable-next-line no-plusplus
-        while (id--) {
-            window.clearTimeout(id); // will do nothing if no timeout with id is present
-        }
-        socket.emit("typing", {author: chosenUsername});
-        if (e.keyCode === 13) {
-            if (message) {
-                socket.emit("stopTyping", {author: chosenUsername});
-                sendMessage();
-                return () => clearTimeout(timer());
-            }
-        }
-        timer()
-        return () => clearTimeout(timer());
-    };
+    // const handleKeypress = (e: KeyboardEvent<HTMLElement>) => {
+    //     // eslint-disable-next-line @typescript-eslint/no-empty-function
+    //     let id = window.setTimeout(() => {
+    //     }, 0);
+    //     // eslint-disable-next-line no-plusplus
+    //     while (id--) {
+    //         window.clearTimeout(id); // will do nothing if no timeout with id is present
+    //     }
+    //     socket.emit("typing", {author: chosenUsername});
+    //     if (e.keyCode === 13) {
+    //         if (message) {
+    //             socket.emit("stopTyping", {author: chosenUsername});
+    //             sendMessage();
+    //             return () => clearTimeout(timer());
+    //         }
+    //     }
+    //     timer()
+    //     return () => clearTimeout(timer());
+    // };
+
+    const handleKeypressFunction = (e: KeyboardEvent<HTMLElement>) => {
+        handleKeypress(e, chosenUsername, socket, message, sendMessage)
+    }
 
     const id = useId()
     const ref = useRef() as LegacyRef<HTMLInputElement> & { current: HTMLDivElement }
@@ -112,6 +108,7 @@ const Home: NextPage = () => {
             setUsername(session.user?.name as string)
             setChosenUsername(session.user?.name as string)
             setIsAdmin(session.user?.email === process.env.NEXT_PUBLIC_ADMIN_EMAIL)
+            getUser()
         }
     }, [session])
 
@@ -122,6 +119,9 @@ const Home: NextPage = () => {
             router.push("/admin")
         }
     }, [isAdmin, router])
+    useEffect(() => {
+        socketInitializer()
+    }, []);
 
     return (
         <div className="flex items-center p-4 mx-auto min-h-screen justify-center bg-purple-500">
@@ -167,7 +167,7 @@ const Home: NextPage = () => {
                                     value={message}
                                     className="outline-none py-2 px-2 rounded-bl-md flex-1"
                                     onChange={(e) => setMessage(e.target.value)}
-                                    onKeyDown={handleKeypress}
+                                    onKeyDown={handleKeypressFunction}
                                 />
                                 <div
                                     className="border-l border-gray-300 flex justify-center items-center  rounded-br-md group hover:bg-purple-500 transition-all">
