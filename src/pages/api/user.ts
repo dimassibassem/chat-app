@@ -6,15 +6,14 @@ const userHandler = async (req: NextApiRequest,
                            res: NextApiResponse) => {
 
     const {image, name, email} = req.body as { image: string, name: string, email: string };
-
-
-    const user = await prisma.user.findFirst({
+    let user
+    user = await prisma.user.findFirst({
         where: {
             email
         }
     });
     if (!user) {
-        await prisma.user.create({
+        user = await prisma.user.create({
             data: {
                 image,
                 name,
@@ -22,7 +21,7 @@ const userHandler = async (req: NextApiRequest,
             }
         });
     }
-    return res.status(200)
+    return res.status(200).json(user)
 }
 
 export default userHandler
