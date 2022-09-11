@@ -2,6 +2,7 @@ import io, {Socket} from "socket.io-client";
 import {KeyboardEvent, LegacyRef, useEffect, useId, useRef, useState} from "react";
 import {NextPage} from "next";
 import {useSession} from "next-auth/react";
+import {useRouter} from "next/router";
 import LoginBtn from "@/pages/LoginBtn";
 import {incomingMessage, outgoingMessage} from "@/audio/audio";
 
@@ -19,6 +20,7 @@ const Home: NextPage = () => {
     const [message, setMessage] = useState("");
     const [messages, setMessages] = useState<Array<Message>>([]);
     const [someoneIsTyping, setSomeoneIsTyping] = useState({});
+    const [isAdmin, setIsAdmin] = useState(false);
     const {data: session} = useSession()
     const socketInitializer = async () => {
         // We just call it because we don't need anything else out of it
@@ -90,15 +92,26 @@ const Home: NextPage = () => {
         if (session) {
             setUsername(session.user?.name as string)
             setChosenUsername(session.user?.name as string)
+            setIsAdmin(session.user?.email === process.env.NEXT_PUBLIC_ADMIN_EMAIL)
         }
     }, [session])
+
+    const router = useRouter();
+
+    useEffect(() => {
+        if (isAdmin) {
+      router.push("/admin")
+        }
+    }, [isAdmin, router])
 
     return (
         <div className="flex items-center p-4 mx-auto min-h-screen justify-center bg-purple-500">
             <main className="gap-4 flex flex-col items-center justify-center w-full h-full">
                 <LoginBtn/>
 
-                {chosenUsername ? (
+                {isAdmin && <h2>Welcome Boss</h2>}
+
+                {username ? (
                     <>
                         <p className="font-bold text-white text-xl">
                             Your username: {username}
@@ -135,7 +148,7 @@ const Home: NextPage = () => {
                                     value={message}
                                     className="outline-none py-2 px-2 rounded-bl-md flex-1"
                                     onChange={(e) => setMessage(e.target.value)}
-                                    onKeyUp={handleKeypress}
+                                    onKeyDown={handleKeypress}
                                 />
                                 <div
                                     className="border-l border-gray-300 flex justify-center items-center  rounded-br-md group hover:bg-purple-500 transition-all">
@@ -152,33 +165,7 @@ const Home: NextPage = () => {
                             </div>
                         </div>
                     </>
-                ) : (
-                    <>
-                        <h3 className="font-bold text-white text-xl">
-                            How people should call you?
-                        </h3>
-                        <form>
-                            <div className="grid grid-col-1">
-                                <input
-                                    type="text"
-                                    placeholder="Identity..."
-                                    value={username}
-                                    className="p-3 rounded-md outline-none"
-                                    onChange={(e) => setUsername(e.target.value)}
-                                />
-                                <button
-                                    type="submit"
-                                    onClick={() => {
-                                        setChosenUsername(username);
-                                    }}
-                                    className="bg-white mt-8 rounded-md mx-10 py-2 text-xl"
-                                >
-                                    Go!
-                                </button>
-                            </div>
-                        </form>
-                    </>
-                )
+                ) : null
                 }
             </main>
         </div>
