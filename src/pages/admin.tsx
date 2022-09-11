@@ -2,10 +2,10 @@ import {NextPage} from "next";
 import axios from "axios";
 import {KeyboardEvent, LegacyRef, SetStateAction, useEffect, useId, useRef, useState} from "react";
 import io, {Socket} from "socket.io-client";
-import {useSession} from "next-auth/react";
+import {signOut, useSession} from "next-auth/react";
 import {incomingMessage, outgoingMessage} from "@/audio/audio";
 import {User, Message} from "@/utils/types";
-import {handleKeypress} from "@/utils";
+import {getUser, handleKeypress} from "@/utils";
 
 
 let socket: Socket;
@@ -17,14 +17,6 @@ const Admin: NextPage = () => {
     const [chatWith, setChatWith] = useState() as [User, (user: SetStateAction<User>) => void];
     const [connectedUser, setConnectedUser] = useState() as [User, (user: SetStateAction<User>) => void];
     const {data: session} = useSession()
-    const getUser = async () => {
-        const res = await axios.post("/api/findUser", {
-            email: session?.user?.email
-        });
-        setConnectedUser(res.data);
-    }
-
-
     const socketInitializer = async () => {
         // We just call it because we don't need anything else out of it
 
@@ -46,7 +38,6 @@ const Admin: NextPage = () => {
             setSomeoneIsTyping((current) => ({...current, [user]: false}));
         })
     };
-
 
     const id = useId();
     const ref = useRef() as LegacyRef<HTMLInputElement> & { current: HTMLDivElement }
@@ -89,7 +80,7 @@ const Admin: NextPage = () => {
     }, []);
     useEffect(() => {
         if (session) {
-            getUser()
+            getUser(session, setConnectedUser)
             getUsers()
         }
     }, [session])
@@ -98,6 +89,7 @@ const Admin: NextPage = () => {
             <div className="flex items-center p-4 mx-auto min-h-screen justify-center bg-purple-500">
                 <main className="gap-4 flex flex-col items-center justify-center w-full h-full">
                     Admin page
+                    <button type="button" onClick={() => signOut()}>Sign out</button>
                     {users.map((user: User) => (
                         <div key={user.id}>
                             <h1>{user.name}</h1>
