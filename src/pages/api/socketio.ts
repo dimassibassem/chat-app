@@ -1,10 +1,7 @@
 import {Server} from 'socket.io'
 import {NextApiRequest, NextApiResponse} from "next";
-import messageHandler, {ServerToClientEvents} from '@/utils/messageHandler';
-
-type Data = {
-    author?: string,
-}
+import messageHandler from '@/utils/messageHandler';
+import {ServerToClientEvents, Data} from '@/utils/types';
 
 const ioHandler = (req: NextApiRequest,
                    res: NextApiResponse) => {
