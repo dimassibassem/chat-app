@@ -1,20 +1,11 @@
 import {useSession, signIn, signOut} from "next-auth/react"
 import {NextComponentType} from "next";
-import axios from "axios";
-import {Session} from "next-auth";
 import {useEffect} from "react";
-
+import {addUserIfNotExist} from "@/utils";
 
 const LoginBtn: NextComponentType = () => {
     const {data: session} = useSession()
 
-    const addUserIfNotExist = async (activeSession: Session) => {
-        await axios.post("/api/user", {
-            name: activeSession.user?.name,
-            email: activeSession.user?.email,
-            image: activeSession.user?.image
-        })
-    }
     useEffect(() => {
         if (session) {
             addUserIfNotExist(session)
