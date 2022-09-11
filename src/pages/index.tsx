@@ -2,6 +2,7 @@ import io, {Socket} from "socket.io-client";
 import {KeyboardEvent, LegacyRef, useEffect, useId, useRef, useState} from "react";
 import {NextPage} from "next";
 import {useSession} from "next-auth/react";
+import {useRouter} from "next/router";
 import LoginBtn from "@/pages/LoginBtn";
 import {incomingMessage, outgoingMessage} from "@/audio/audio";
 
@@ -94,6 +95,14 @@ const Home: NextPage = () => {
             setIsAdmin(session.user?.email === process.env.NEXT_PUBLIC_ADMIN_EMAIL)
         }
     }, [session])
+
+    const router = useRouter();
+
+    useEffect(() => {
+        if (isAdmin) {
+      router.push("/admin")
+        }
+    }, [isAdmin, router])
 
     return (
         <div className="flex items-center p-4 mx-auto min-h-screen justify-center bg-purple-500">
