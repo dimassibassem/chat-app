@@ -52,10 +52,14 @@
     "global-require": 0,
     "react/jsx-props-no-spreading": "off",
     "no-undef": "off",
-    "@typescript-eslint/no-unused-vars": ["warn"],
-    "import/extensions" : "off",
+    "@typescript-eslint/no-unused-vars": [
+      "warn"
+    ],
+    "import/extensions": "off",
     "import/no-unresolved": "off",
-    "no-unused-vars": "off"
+    "no-unused-vars": "off",
+    "no-plusplus": "off",
+    "@typescript-eslint/no-empty-function": "off"
   },
   "settings": {
     "react": {
