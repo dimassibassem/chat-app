@@ -1,8 +1,8 @@
 import {Server} from 'socket.io'
 
 export interface ServerToClientEvents {
-    broadcast: { emit(event: string, data: object) : void },
-    emit(event: string, data: object) : void,
+    broadcast: { emit(event: string, data: string | object): void },
+    emit(event: string, data: object): void,
     on(event: string, func: (msg: object) => void): void;
 }
 
