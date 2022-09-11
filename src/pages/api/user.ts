@@ -5,24 +5,24 @@ import prisma from '@/utils/prismaClient';
 const userHandler = async (req: NextApiRequest,
                            res: NextApiResponse) => {
 
-    const {name} = req.body;
-    const {email} = req.body;
+    const {image, name, email} = req.body as { image: string, name: string, email: string };
+
 
     const user = await prisma.user.findFirst({
         where: {
             email
         }
     });
-
     if (!user) {
         await prisma.user.create({
             data: {
+                image,
                 name,
                 email
             }
         });
     }
-    res.status(200)
+    return res.status(200)
 }
 
 export default userHandler
