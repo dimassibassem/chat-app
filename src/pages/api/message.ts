@@ -5,7 +5,7 @@ import prisma from '@/utils/prismaClient';
 const messageHandler = async (req: NextApiRequest,
                               res: NextApiResponse) => {
 
-    const {email, message, receiverId} = req.body as { email: string, message: string | null, receiverId: number };
+    const {email, message, receiverId} = req.body as { email: string, message: string, receiverId: number };
 
     const user = await prisma.user.findFirst({
         where: {
