@@ -1,19 +1,10 @@
 import {NextApiRequest, NextApiResponse} from "next";
 
 import prisma from '@/utils/prismaClient';
+import {Message} from "@/utils/types";
 
 const usersWithMessages = async (req: NextApiRequest,
                                  res: NextApiResponse) => {
-
-    type UserMessage = {
-        id: number,
-        content: string,
-        senderId?: number,
-        receiverId?: number,
-        createdAt: Date,
-        updatedAt: Date
-        status: string,
-    }
 
 
     const data = await prisma.user.findMany({
@@ -29,7 +20,7 @@ const usersWithMessages = async (req: NextApiRequest,
                     content: true,
                     createdAt: true,
                     updatedAt: true,
-                    receiverId : true,
+                    receiverId: true,
                     senderId: true,
                 }
             },
@@ -47,27 +38,28 @@ const usersWithMessages = async (req: NextApiRequest,
     })
 
     const result = data.map((user: any) => {
-            const messages: Array<UserMessage> = []
-            user.receivedMessages.map((message: UserMessage) => messages.push({
+            const messages: Array<Message> = []
+            user.receivedMessages.map((message: Message) => messages.push({
                 id: message.id,
                 content: message.content,
                 senderId: message.senderId,
-                createdAt: message.createdAt,
-                updatedAt: message.updatedAt,
-                status: 'RECEIVED'
-            }))
-
-            user.sentMessages.map((message: UserMessage) => messages.push({
-                id: message.id,
-                content: message.content,
                 receiverId: message.receiverId,
                 createdAt: message.createdAt,
                 updatedAt: message.updatedAt,
-                status: 'SENT'
             }))
-        const {sentMessages, receivedMessages, ...rest} = user
-        messages.sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime())
-        return {...rest, messages}
+            user.sentMessages.map((message: Message) => messages.push({
+                id: message.id,
+                content: message.content,
+                receiverId: message.receiverId,
+                senderId: message.senderId,
+                createdAt: message.createdAt,
+                updatedAt: message.updatedAt,
+
+            }))
+
+            const {sentMessages, receivedMessages, ...rest} = user
+            messages.sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime())
+            return {...rest, messages}
         }
     )
 
