@@ -1,7 +1,7 @@
 type Message = {
     id?: number;
     author?: string;
-    createdAt?: Date;
+    createdAt: Date;
     updatedAt?: Date;
     content?: string;
     message?: string;
@@ -23,10 +23,13 @@ type Data = {
 }
 
 
+
 export interface ServerToClientEvents {
     broadcast: { emit(event: string, data: string | object): void },
+
     emit(event: string, data: object): void,
+
     on(event: string, func: (msg: object) => void): void;
 }
 
-export type {Message, User,Data}
+export type {Message, User, Data}
