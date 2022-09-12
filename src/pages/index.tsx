@@ -48,7 +48,7 @@ const Home: NextPage = () => {
     const sendMessage = async () => {
         socket.emit("createdMessage", {
             author: chosenUsername,
-            message,
+            content:message,
             senderId: connectedUser.id,
             receiverId: 29,
             createdAt: new Date()
@@ -56,7 +56,7 @@ const Home: NextPage = () => {
         outgoingMessage()
         setMessages((currentMsg) => [
             ...currentMsg,
-            {author: chosenUsername, message, senderId: connectedUser.id, receiverId: 29, createdAt: new Date()},
+            {author: chosenUsername, content:message, senderId: connectedUser.id, receiverId: 29, createdAt: new Date()},
         ]);
         setMessage("");
     };
@@ -105,7 +105,7 @@ const Home: NextPage = () => {
                                         className="w-full py-1 px-2 border-b border-gray-200"
                                         key={`${id + i}`}
                                     >
-                                        {msg.author} : {msg.message}
+                                        {msg.author} : {msg.content}
                                     </div>
                                 ))}
 

@@ -51,7 +51,7 @@ const Admin: NextPage = () => {
     const sendMessage = async () => {
         socket.emit("createdMessage", {
             author: "Admin",
-            message,
+            content: message,
             receiverId: chatWith.id,
             senderId: connectedUser.id,
             createdAt: new Date()
@@ -59,7 +59,13 @@ const Admin: NextPage = () => {
         outgoingMessage()
         setMessages((currentMsg) => [
             ...currentMsg,
-            {author: "Admin", message, senderId: connectedUser.id, receiverId: chatWith.id, createdAt: new Date()},
+            {
+                author: "Admin",
+                content: message,
+                senderId: connectedUser.id,
+                receiverId: chatWith.id,
+                createdAt: new Date()
+            },
         ]);
         setMessage("");
     };
@@ -105,18 +111,16 @@ const Admin: NextPage = () => {
                         <div className="flex flex-col justify-end bg-white h-[20rem] min-w-[33%] rounded-md shadow-md ">
                             <div className="h-full last:border-b-0 overflow-y-scroll">
                                 {messages.map((msg) => {
-                                        // @ts-ignore
                                         if (msg.senderId === connectedUser.id) {
                                             return (
                                                 <div className="bg-blue-500" key={msg.id}>
-                                                    {session.user?.name} : {msg.content || msg.message}
+                                                    {session.user?.name} : {msg.content}
                                                 </div>
                                             )
                                         }
-                                        // @ts-ignore
                                         return (
                                             <div className="bg-green-500" key={msg.id}>
-                                                {chatWith.name} : {msg.content || msg.message}
+                                                {chatWith.name} : {msg.content}
                                             </div>
                                         )
                                     }
