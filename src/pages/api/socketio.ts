@@ -1,7 +1,7 @@
 import {Server} from 'socket.io'
 import {NextApiRequest, NextApiResponse} from "next";
-import messageHandler from '@/utils/messageHandler';
-import {ServerToClientEvents, Data} from '@/utils/types';
+import {messageHandler, stopTypingHandler, typingHandler} from '@/utils/socketEvents';
+import {ServerToClientEvents} from '@/utils/types';
 
 const ioHandler = (req: NextApiRequest,
                    res: NextApiResponse) => {
@@ -21,12 +21,8 @@ const ioHandler = (req: NextApiRequest,
     // Define actions inside
     io.on("connection", (socket: ServerToClientEvents) => {
         messageHandler(io, socket);
-        socket.on("typing", (data: Data) => {
-            socket.broadcast.emit("typing", data.author || "Anonymous");
-        })
-        socket.on("stopTyping", (data: Data) => {
-            socket.broadcast.emit("stopTyping", data.author || "Anonymous");
-        })
+        typingHandler(io, socket);
+        stopTypingHandler(io, socket);
     });
 
     console.log("Setting up socket");
