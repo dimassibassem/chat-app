@@ -4,7 +4,6 @@ type Message = {
     createdAt: Date;
     updatedAt?: Date;
     content?: string;
-    message?: string;
     senderId?: number;
     receiverId?: number;
 }
@@ -29,7 +28,7 @@ export interface ServerToClientEvents {
 
     emit(event: string, data: object): void,
 
-    on(event: string, func: (msg: object) => void): void;
+    on(event: string, func: (msg: Message) => void): void;
 }
 
 export type {Message, User, Data}
