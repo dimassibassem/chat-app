@@ -3,9 +3,10 @@ import axios from "axios";
 import {KeyboardEvent, LegacyRef, SetStateAction, useEffect, useId, useRef, useState} from "react";
 import io, {Socket} from "socket.io-client";
 import {signOut, useSession} from "next-auth/react";
-import {incomingMessage, outgoingMessage} from "@/audio/audio";
+import {outgoingMessage} from "@/audio/audio";
 import {User, Message} from "@/utils/types";
-import {getUser, handleKeypress} from "@/utils";
+import {getUser} from "@/utils";
+import {newIncomingMessageHandler, stopTypingHandler, typingHandler, handleKeypress} from "@/utils/socketClientEvent";
 
 
 let socket: Socket;
@@ -19,24 +20,11 @@ const Admin: NextPage = () => {
     const {data: session} = useSession()
     const socketInitializer = async () => {
         // We just call it because we don't need anything else out of it
-
         await fetch("/api/socketio");
-
         socket = io();
-        socket.on("newIncomingMessage", async (msg) => {
-            incomingMessage()
-            setMessages((currentMsg) => [
-                ...currentMsg,
-                msg,
-            ]);
-
-        });
-        socket.on("typing", async (user) => {
-            setSomeoneIsTyping((current) => ({...current, [user]: true}));
-        });
-        socket.on("stopTyping", (user) => {
-            setSomeoneIsTyping((current) => ({...current, [user]: false}));
-        })
+        newIncomingMessageHandler(socket, setMessages);
+        typingHandler(socket, setSomeoneIsTyping);
+        stopTypingHandler(socket, setSomeoneIsTyping);
     };
 
     const id = useId();
