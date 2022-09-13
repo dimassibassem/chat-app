@@ -3,8 +3,8 @@ import {KeyboardEvent} from "react";
 import {incomingMessage} from "@/audio/audio";
 import {Message} from "@/utils/types";
 
-export function newIncomingMessageHandler(socket: Socket, setMessages: (msg: (currentMsg: any) => (Message)[]) => void) {
-    socket.on("newIncomingMessage", async (msg: string) => {
+export function newIncomingMessageHandler(socket: Socket, setMessages: (msg: (currentMsg: Array<Message>) => (Message)[]) => void) {
+    socket.on("newIncomingMessage", async (msg: Message) => {
         incomingMessage()
         setMessages((currentMsg) => [
             ...currentMsg,
@@ -14,7 +14,7 @@ export function newIncomingMessageHandler(socket: Socket, setMessages: (msg: (cu
 }
 
 export function typingHandler(socket: Socket, setSomeoneIsTyping: (arg0: (current: object) => object) => void) {
-    socket.on("typing", async (user) => {
+    socket.on("typing", async (user : string) => {
         setSomeoneIsTyping((current) => ({...current, [user]: true}));
     });
 }
