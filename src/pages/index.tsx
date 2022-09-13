@@ -4,9 +4,10 @@ import {NextPage} from "next";
 import {useSession} from "next-auth/react";
 import {useRouter} from "next/router";
 import LoginBtn from "@/pages/LoginBtn";
-import {incomingMessage, outgoingMessage} from "@/audio/audio";
+import {outgoingMessage} from "@/audio/audio";
 import {Message, User} from "@/utils/types";
-import {getUser, handleKeypress} from "@/utils";
+import {getUser} from "@/utils";
+import {newIncomingMessageHandler, stopTypingHandler, typingHandler, handleKeypress} from "@/utils/socketClientEvent";
 
 let socket: Socket;
 
@@ -25,38 +26,31 @@ const Home: NextPage = () => {
 
     const socketInitializer = async () => {
         // We just call it because we don't need anything else out of it
-
         await fetch("/api/socketio");
-
         socket = io();
-
-        socket.on("newIncomingMessage", async (msg) => {
-            incomingMessage()
-            setMessages((currentMsg) => [
-                ...currentMsg,
-                msg,
-            ]);
-        });
-        socket.on("typing", async (user) => {
-            setSomeoneIsTyping((current) => ({...current, [user]: true}));
-        });
-        socket.on("stopTyping", (user) => {
-            setSomeoneIsTyping((current) => ({...current, [user]: false}));
-        })
+        newIncomingMessageHandler(socket, setMessages);
+        typingHandler(socket, setSomeoneIsTyping);
+        stopTypingHandler(socket, setSomeoneIsTyping);
     };
 
     const sendMessage = async () => {
         socket.emit("createdMessage", {
             author: chosenUsername,
-            content:message,
+            content: message,
             senderId: connectedUser.id,
-            receiverId: 29,
+            receiverId: 2,
             createdAt: new Date()
         });
         outgoingMessage()
         setMessages((currentMsg) => [
             ...currentMsg,
-            {author: chosenUsername, content:message, senderId: connectedUser.id, receiverId: 29, createdAt: new Date()},
+            {
+                author: chosenUsername,
+                content: message,
+                senderId: connectedUser.id,
+                receiverId: 2,
+                createdAt: new Date()
+            },
         ]);
         setMessage("");
     };
@@ -85,7 +79,7 @@ const Home: NextPage = () => {
     }, []);
 
     ref.current?.scrollIntoView({behavior: "smooth"})
-
+    console.log(someoneIsTyping);
     return (
         <div className="flex items-center p-4 mx-auto min-h-screen justify-center bg-purple-500">
             <main className="gap-4 flex flex-col items-center justify-center w-full h-full">
