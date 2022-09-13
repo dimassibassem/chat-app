@@ -13,7 +13,6 @@ let socket: Socket;
 
 const Home: NextPage = () => {
     const [username, setUsername] = useState("");
-    const [chosenUsername, setChosenUsername] = useState("");
     const [message, setMessage] = useState("");
     const [messages, setMessages] = useState<Array<Message>>([]);
     const [someoneIsTyping, setSomeoneIsTyping] = useState({});
@@ -35,7 +34,7 @@ const Home: NextPage = () => {
 
     const sendMessage = async () => {
         socket.emit("createdMessage", {
-            author: chosenUsername,
+            author: username,
             content: message,
             senderId: connectedUser.id,
             receiverId: 2,
@@ -45,7 +44,7 @@ const Home: NextPage = () => {
         setMessages((currentMsg) => [
             ...currentMsg,
             {
-                author: chosenUsername,
+                author: username,
                 content: message,
                 senderId: connectedUser.id,
                 receiverId: 2,
@@ -57,13 +56,12 @@ const Home: NextPage = () => {
 
 
     const handleKeypressFunction = (e: KeyboardEvent<HTMLElement>) => {
-        handleKeypress(e, chosenUsername, socket, message, sendMessage)
+        handleKeypress(e, username, socket, message, sendMessage)
     }
 
     useEffect(() => {
         if (session) {
             setUsername(session.user?.name as string)
-            setChosenUsername(session.user?.name as string)
             setIsAdmin(session.user?.email === process.env.NEXT_PUBLIC_ADMIN_EMAIL)
             getUser(session, setConnectedUser)
         }
@@ -79,6 +77,8 @@ const Home: NextPage = () => {
     }, []);
 
     ref.current?.scrollIntoView({behavior: "smooth"})
+
+
     console.log(someoneIsTyping);
     return (
         <div className="flex items-center p-4 mx-auto min-h-screen justify-center bg-purple-500">
