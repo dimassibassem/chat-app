@@ -22,7 +22,7 @@ const Admin: NextPage = () => {
         // We just call it because we don't need anything else out of it
         await fetch("/api/socketio");
         socket = io();
-        newIncomingMessageHandler(socket, setMessages);
+        newIncomingMessageHandler(socket, connectedUser, setMessages);
         typingHandler(socket, setSomeoneIsTyping);
         stopTypingHandler(socket, setSomeoneIsTyping);
     };
@@ -70,8 +70,10 @@ const Admin: NextPage = () => {
     }
 
     useEffect(() => {
-        socketInitializer()
-    }, []);
+        if (connectedUser) {
+            socketInitializer()
+        }
+    }, [connectedUser]);
     useEffect(() => {
         if (session) {
             getUser(session, setConnectedUser)
@@ -99,23 +101,28 @@ const Admin: NextPage = () => {
                         <div className="flex flex-col justify-end bg-white h-[20rem] min-w-[33%] rounded-md shadow-md ">
                             <div className="h-full last:border-b-0 overflow-y-scroll">
                                 {messages.map((msg) => {
-                                        if (msg.senderId === connectedUser.id) {
+                                       if(msg.senderId === chatWith.id || msg.receiverId === chatWith.id) {
+                                            if (msg.senderId === connectedUser.id) {
+                                                return (
+                                                    <div className="bg-blue-500" key={msg.id}>
+                                                        {session.user?.name} : {msg.content}
+                                                    </div>
+                                                )
+                                            }
                                             return (
-                                                <div className="bg-blue-500" key={msg.id}>
-                                                    {session.user?.name} : {msg.content}
+                                                <div className="bg-green-500" key={msg.id}>
+                                                    {chatWith.name} : {msg.content}
                                                 </div>
                                             )
                                         }
-                                        return (
-                                            <div className="bg-green-500" key={msg.id}>
-                                                {chatWith.name} : {msg.content}
-                                            </div>
-                                        )
+                                       return ""
                                     }
                                 )}
                                 {Object.keys(someoneIsTyping).map((user) => {
-                                        // @ts-ignore
+                                    console.log(someoneIsTyping);
+                                    // @ts-ignore
                                         if (someoneIsTyping[user]) {
+                                            console.log(user);
                                             return <div className="w-full py-1 px-2 border-b border-gray-200"
                                                         key={id + user}>{user} is typing...</div>
                                         }
@@ -158,4 +165,5 @@ const Admin: NextPage = () => {
     }
     return <div>Loading...</div>
 }
+
 export default Admin;

@@ -1,20 +1,23 @@
 import {Socket} from "socket.io-client";
 import {KeyboardEvent} from "react";
 import {incomingMessage} from "@/audio/audio";
-import {Message} from "@/utils/types";
+import {Message, User} from "@/utils/types";
 
-export function newIncomingMessageHandler(socket: Socket, setMessages: (msg: (currentMsg: Array<Message>) => (Message)[]) => void) {
+export function newIncomingMessageHandler(socket: Socket, user: User, setMessages: (msg: (currentMsg: Array<Message>) => (Message)[]) => void) {
     socket.on("newIncomingMessage", async (msg: Message) => {
-        incomingMessage()
-        setMessages((currentMsg) => [
-            ...currentMsg,
-            msg,
-        ]);
+        console.log("user", user);
+        if (msg.senderId === user.id || msg.receiverId === user.id) {
+            incomingMessage()
+            setMessages((currentMsg) => [
+                ...currentMsg,
+                msg,
+            ]);
+        }
     });
 }
 
 export function typingHandler(socket: Socket, setSomeoneIsTyping: (arg0: (current: object) => object) => void) {
-    socket.on("typing", async (user : string) => {
+    socket.on("typing", async (user: string) => {
         setSomeoneIsTyping((current) => ({...current, [user]: true}));
     });
 }

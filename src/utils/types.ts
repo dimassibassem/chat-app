@@ -24,11 +24,11 @@ type Data = {
 
 
 export interface ServerToClientEvents {
-    broadcast: { emit(event: string, data: string | object): void },
+    broadcast: { emit(event: string, data: any): void },
 
     emit(event: string, data: object): void,
 
-    on(event: string, func: (msg: Message) => void): void;
+    on(event: string, func: (msg: any) => void): void;
 }
 
 export type {Message, User, Data}

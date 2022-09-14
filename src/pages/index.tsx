@@ -27,7 +27,7 @@ const Home: NextPage = () => {
         // We just call it because we don't need anything else out of it
         await fetch("/api/socketio");
         socket = io();
-        newIncomingMessageHandler(socket, setMessages);
+        newIncomingMessageHandler(socket, connectedUser, setMessages);
         typingHandler(socket, setSomeoneIsTyping);
         stopTypingHandler(socket, setSomeoneIsTyping);
     };
@@ -73,8 +73,10 @@ const Home: NextPage = () => {
         }
     }, [isAdmin, router])
     useEffect(() => {
-        socketInitializer()
-    }, []);
+        if (connectedUser) {
+            socketInitializer()
+        }
+    }, [connectedUser]);
 
     ref.current?.scrollIntoView({behavior: "smooth"})
 
@@ -93,14 +95,15 @@ const Home: NextPage = () => {
                         </p>
                         <div className="flex flex-col justify-end bg-white h-[20rem] min-w-[33%] rounded-md shadow-md ">
                             <div className="h-full last:border-b-0 overflow-y-scroll">
-                                {messages.map((msg, i) => (
-                                    <div
-                                        className="w-full py-1 px-2 border-b border-gray-200"
-                                        key={`${id + i}`}
-                                    >
-                                        {msg.author} : {msg.content}
-                                    </div>
-                                ))}
+                                {messages.map((msg, i) => msg.senderId === connectedUser.id || msg.receiverId === connectedUser.id ? (
+                                        <div
+                                            className="w-full py-1 px-2 border-b border-gray-200"
+                                            key={`${id + i}`}
+                                        >
+                                            {msg.author} : {msg.content}
+                                        </div>
+                                    ) : ""
+                                )}
 
                                 {Object.keys(someoneIsTyping).map((user) => {
                                         // @ts-ignore
