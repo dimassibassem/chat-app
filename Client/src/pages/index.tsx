@@ -11,10 +11,10 @@ const Home: NextPage = () => {
     const [message, setMessage] = useState("");
     const [messages, setMessages] = useState([] as Message[]);
     const [isAdmin, setIsAdmin] = useState(false);
-    const [user, setUser] = useState({} as User);
-    const [users, setUsers] = useState([] as User[]);
-    const [someoneIsTyping, setSomeoneIsTyping] = useState({} as User | null);
-    const [chatWith, setChatWith] = useState({} as User);
+    const [user, setUser] = useState();
+    const [users, setUsers] = useState([]);
+    const [someoneIsTyping, setSomeoneIsTyping] = useState();
+    const [chatWith, setChatWith] = useState();
     const {data: session} = useSession()
     const id = useId()
     const ref = useRef() as LegacyRef<HTMLInputElement> & { current: HTMLDivElement }
