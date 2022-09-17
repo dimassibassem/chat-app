@@ -1,34 +1,19 @@
-type Message = {
-    id?: number;
-    author?: string;
+export type Message = {
+    id: number;
+    content: string;
     createdAt: Date;
-    updatedAt?: Date;
-    content?: string;
     senderId?: number;
     receiverId?: number;
-}
-
-type User = {
-    id?: number;
-    name?: string;
-    email?: string;
-    image?: string;
-    createdAt?: Date;
     updatedAt?: Date;
+    sender?: string;
+    receiver?: string;
 }
 
-type Data = {
-    author?: string,
+export type User = {
+    id?: number;
+    name: string;
+    email: string;
+    image: string;
+    messages?: Message[];
+
 }
-
-
-
-export interface ServerToClientEvents {
-    broadcast: { emit(event: string, data: any, receiver): void },
-
-    emit(event: string, data: object): void,
-
-    on(event: string, func: (sender, receiver) => void): void;
-}
-
-export type {Message, User, Data}

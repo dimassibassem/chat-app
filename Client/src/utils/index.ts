@@ -1,18 +1,38 @@
-import {Session} from "next-auth";
-import axios from "axios";
+import {Socket} from "socket.io-client";
+import {Message, User} from "@/utils/types";
 
+export function typingHandler(socket: Socket, setSomeoneIsTyping: any) {
 
-export const addUserIfNotExist = async (activeSession: Session) => {
-    await axios.post("/api/user", {
-        name: activeSession.user?.name,
-        email: activeSession.user?.email,
-        image: activeSession.user?.image
+    socket.on("typing", async (data: User) => {
+        setSomeoneIsTyping(data)
+    });
+}
+
+export function stopTypingHandler(socket: Socket, setSomeoneIsTyping: (arg0: null) => void) {
+    socket.on("stopTyping", () => {
+        setSomeoneIsTyping(null)
     })
 }
 
-export const getUser = async (session: Session, setConnectedUser: (arg0: any) => void) => {
-    const res = await axios.post("/api/findUser", {
-        email: session?.user?.email
-    });
-    setConnectedUser(res.data);
-}
+
+const timer = (user: User, socket: Socket) => setTimeout(() => {
+    socket.emit("stopTyping", user);
+}, 2000)
+
+export const handleKeypress = (e: KeyboardEvent, user: User, socket: Socket, message: Message, sendMessage: { (): void; }) => {
+    let timerId = window.setTimeout(() => {
+    }, 0);
+    while (timerId--) {
+        window.clearTimeout(timerId); // will do nothing if no timeout with id is present
+    }
+    socket.emit("typing", user);
+    if (e.keyCode === 13) {
+        if (message) {
+            sendMessage();
+            socket.emit("stopTyping", user);
+            return () => clearTimeout(timer(user, socket));
+        }
+    }
+    timer(user, socket)
+    return () => clearTimeout(timer(user, socket));
+};
