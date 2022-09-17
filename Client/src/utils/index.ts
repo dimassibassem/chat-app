@@ -19,7 +19,7 @@ const timer = (user: User, socket: Socket) => setTimeout(() => {
     socket.emit("stopTyping", user);
 }, 2000)
 
-export const handleKeypress = (e: KeyboardEvent, user: User, socket: Socket, message: Message, sendMessage: { (): void; }) => {
+export const handleKeypress = (e: KeyboardEvent, user: User, socket: Socket, message: string, sendMessage: { (): void }) => {
     let timerId = window.setTimeout(() => {
     }, 0);
     while (timerId--) {
