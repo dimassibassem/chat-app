@@ -1,10 +1,10 @@
-import React, { LegacyRef, useEffect, useId, useRef, useState} from 'react';
+import React, {LegacyRef, useEffect, useId, useRef, useState} from 'react';
 import {NextPage} from "next";
 import {useSession} from "next-auth/react";
 import LoginBtn from "@/pages/LoginBtn";
 import {socket} from "@/context/socket";
 import {incomingMessage, outgoingMessage} from "@/audio/audio";
-import {handleKeypress} from "@/utils";
+import {handleKeypress, stopTypingHandler, typingHandler} from "@/utils";
 import {Message, User} from "@/utils/types";
 
 const Home: NextPage = () => {
@@ -24,19 +24,20 @@ const Home: NextPage = () => {
             setUser(session.user)
             socket.emit("assignRoom", session.user)
             setIsAdmin(session.user.email === process.env.NEXT_PUBLIC_ADMIN_EMAIL)
-            if (isAdmin) {
-                socket.emit("getUsers")
-                socket.on("usersData", (data) => {
-                    setUsers(data)
-                })
-            }
             socket.emit("checkUser", session.user)
         }
     }, [session, isAdmin])
 
+    if (isAdmin) {
+        socket.emit("getUsers")
+        socket.on("usersData", (data) => {
+            setUsers(data)
+        })
+    }
 
     const changeRoom = () => {
         if (chatWith) {
+            // @ts-ignore
             socket.emit("changeRoom", chatWith.email)
         }
     }
@@ -44,36 +45,40 @@ const Home: NextPage = () => {
     function sendMessage() {
         if (session?.user?.email === process.env.NEXT_PUBLIC_ADMIN_EMAIL) {
             socket.emit("send_Message", {
+                // @ts-ignore
                 sender: user.email,
+                // @ts-ignore
                 receiver: chatWith.email,
                 content: message,
+                // @ts-ignore
                 room: chatWith.email
             },)
-            outgoingMessage()
         } else {
             socket.emit("send_Message", {
+                // @ts-ignore
                 sender: user.email,
                 receiver: process.env.NEXT_PUBLIC_ADMIN_EMAIL,
                 content: message,
-                room: process.env.NEXT_PUBLIC_ADMIN_EMAIL
+                // @ts-ignore
+                room: user.email
             })
-            outgoingMessage()
         }
-
+        // outgoingMessage()
         setMessage("")
     }
 
     socket.on("newIncomingMessage", async (msg: Message) => {
-        incomingMessage()
         setMessages([...messages, msg])
     })
 
-    socket.on("typing", async (data) => {
-        setSomeoneIsTyping(data)
-    });
-    socket.on("stopTyping", async (data) => setSomeoneIsTyping(null));
+    typingHandler(socket,setSomeoneIsTyping)
+
+    // @ts-ignore
+    stopTypingHandler(socket,setSomeoneIsTyping)
+
 
     function handleKeypressFunction(e: KeyboardEvent) {
+        // @ts-ignore
         handleKeypress(e, user, socket, message, sendMessage)
     }
 
@@ -82,7 +87,9 @@ const Home: NextPage = () => {
             <main className="gap-4 flex flex-col items-center justify-center w-full h-full">
                 <LoginBtn/>
                 {isAdmin && users.map((availableUser) => (
+                    // @ts-ignore
                     <div key={availableUser.id} className="flex flex-col items-center justify-center gap-4">
+                        {/* @ts-ignore */}
                         <h1 className="text-2xl font-bold">{availableUser.name}</h1>
                         <button type="button" onClick={(e) => {
                             e.preventDefault()
@@ -97,6 +104,7 @@ const Home: NextPage = () => {
                 {user ? (
                     <>
                         <p className="font-bold text-white text-xl">
+                            {/* @ts-ignore */}
                             Your username: {user.name}
                         </p>
                         {!isAdmin || chatWith ?
@@ -112,6 +120,7 @@ const Home: NextPage = () => {
                                         </div>
                                     )}
                                     {someoneIsTyping ? <div className="w-full py-1 px-2 border-b border-gray-200">
+                                        {/* @ts-ignore */}
                                         {someoneIsTyping.name} is typing...
                                     </div> : null}
                                     <div ref={ref}/>
@@ -124,6 +133,7 @@ const Home: NextPage = () => {
                                         value={message}
                                         className="outline-none py-2 px-2 rounded-bl-md flex-1"
                                         onChange={(e) => setMessage(e.target.value)}
+                                        // @ts-ignore
                                         onKeyDown={handleKeypressFunction}
                                     />
                                     <div

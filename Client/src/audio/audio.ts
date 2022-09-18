@@ -1,27 +1,21 @@
-const load = require('audio-loader')
+const {Howl, Howler} = require('howler');
 
-let incomingMsg: AudioBuffer | null
-let outgoingMsg: AudioBuffer | null
+const incomingMsg = new Howl({
+    src: ["incomingMessage.mp3"],
+    html5: true
+})
 
-(async () => {
-    incomingMsg = await load(`incomingMessage.mp3`)
-    outgoingMsg = await load(`outgoingMessage.mp3`)
-})()
+const outgoingMsg = new Howl({
+    src: ["outgoingMessage.mp3"],
+    html5: true
+})
 
 export function incomingMessage() {
-    const audio = new AudioContext()
-    const source = audio.createBufferSource()
-    source.buffer = incomingMsg
-    source.connect(audio.destination)
-    source.start()
+    incomingMsg.play()
 }
 
 export function outgoingMessage() {
-    const audio = new AudioContext()
-    const source = audio.createBufferSource()
-    source.buffer = outgoingMsg
-    source.connect(audio.destination)
-    source.start()
+    outgoingMsg.play()
 }
 
 

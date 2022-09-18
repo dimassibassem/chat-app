@@ -1,5 +1,7 @@
 import {Server, Socket} from 'socket.io'
+// @ts-ignore
 import prisma from "./prismaClient";
+// @ts-ignore
 import {Message} from "./types";
 
 export const messageHandler = (io: Server, socket: Socket) => {
@@ -31,7 +33,8 @@ export const messageHandler = (io: Server, socket: Socket) => {
             sender: sender?.name || msg.sender,
             receiver: receiver?.name || msg.receiver,
         }
-        socket.to(msg.room).emit("newIncomingMessage", message);
+        console.log(msg.room);
+        io.in(msg.room).emit("newIncomingMessage", message);
     });
 };
 
@@ -119,7 +122,7 @@ export const checkUserHandler = (io: Server, socket: Socket) => {
                     email: user.email
                 }
             })
-            if (!userExist) {
+        if (!userExist) {
                 await prisma.user.create({
                     data: {
                         email: user.email,
