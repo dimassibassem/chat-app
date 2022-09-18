@@ -15,12 +15,14 @@ const Home: NextPage = () => {
     const [users, setUsers] = useState([]);
     const [someoneIsTyping, setSomeoneIsTyping] = useState();
     const [chatWith, setChatWith] = useState();
+    const [room, setRoom] = useState();
     const {data: session} = useSession()
     const id = useId()
     const ref = useRef() as LegacyRef<HTMLInputElement> & { current: HTMLDivElement }
     useEffect(() => {
         if (session?.user) {
             // @ts-ignore
+            setRoom(session.user.email)
             setUser(session.user)
             socket.emit("assignRoom", session.user)
             setIsAdmin(session.user.email === process.env.NEXT_PUBLIC_ADMIN_EMAIL)
@@ -35,12 +37,12 @@ const Home: NextPage = () => {
         })
     }
 
-    const changeRoom = () => {
-        if (chatWith) {
-            // @ts-ignore
-            socket.emit("changeRoom", chatWith.email)
-        }
+    const changeRoom = (availableUser: any) => {
+        setChatWith(availableUser)
+        setRoom(availableUser.email)
+        socket.emit("changeRoom", availableUser.email)
     }
+
 
     function sendMessage() {
         if (session?.user?.email === process.env.NEXT_PUBLIC_ADMIN_EMAIL) {
@@ -50,8 +52,7 @@ const Home: NextPage = () => {
                 // @ts-ignore
                 receiver: chatWith.email,
                 content: message,
-                // @ts-ignore
-                room: chatWith.email
+                room
             },)
         } else {
             socket.emit("send_Message", {
@@ -59,8 +60,7 @@ const Home: NextPage = () => {
                 sender: user.email,
                 receiver: process.env.NEXT_PUBLIC_ADMIN_EMAIL,
                 content: message,
-                // @ts-ignore
-                room: user.email
+                room
             })
         }
         // outgoingMessage()
@@ -71,15 +71,15 @@ const Home: NextPage = () => {
         setMessages([...messages, msg])
     })
 
-    typingHandler(socket,setSomeoneIsTyping)
+    typingHandler(socket, setSomeoneIsTyping)
 
     // @ts-ignore
-    stopTypingHandler(socket,setSomeoneIsTyping)
+    stopTypingHandler(socket, setSomeoneIsTyping)
 
 
     function handleKeypressFunction(e: KeyboardEvent) {
         // @ts-ignore
-        handleKeypress(e, user, socket, message, sendMessage)
+        handleKeypress(e, user, socket, message, sendMessage, room)
     }
 
     return (
@@ -91,10 +91,8 @@ const Home: NextPage = () => {
                     <div key={availableUser.id} className="flex flex-col items-center justify-center gap-4">
                         {/* @ts-ignore */}
                         <h1 className="text-2xl font-bold">{availableUser.name}</h1>
-                        <button type="button" onClick={(e) => {
-                            e.preventDefault()
-                            setChatWith(availableUser)
-                            changeRoom()
+                        <button type="button" onClick={() => {
+                            changeRoom(availableUser)
                         }}>Chat
                         </button>
                     </div>

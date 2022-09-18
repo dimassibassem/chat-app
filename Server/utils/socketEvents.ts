@@ -40,15 +40,12 @@ export const messageHandler = (io: Server, socket: Socket) => {
 
 export const typingHandler = (io: Server, socket: Socket) => {
     socket.on("typing", (data) => {
-        // console.log(data.sender);
-        // console.log(data.receiver);
-        socket.broadcast.emit("typing", data);
+        socket.to(data.room).emit("typing", data.user);
     })
 }
 export const stopTypingHandler = (io: Server, socket: Socket) => {
-    socket.on("stopTyping", (user) => {
-        // console.log(data);
-        socket.broadcast.emit("stopTyping", user);
+    socket.on("stopTyping", (data) => {
+        socket.to(data.room).emit("stopTyping", data.user);
     })
 }
 
