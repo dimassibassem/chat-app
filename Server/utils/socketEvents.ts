@@ -1,6 +1,8 @@
 import {Server, Socket} from 'socket.io'
+
 // @ts-ignore
 import prisma from "./prismaClient";
+
 // @ts-ignore
 import {Message} from "./types";
 
@@ -50,64 +52,15 @@ export const stopTypingHandler = (io: Server, socket: Socket) => {
 }
 
 export const getUsersHandler = (io: Server, socket: Socket) => {
-    socket.on("getUsers", async () => {
+    socket.on("getUsers", async (email) => {
             const users = await prisma.user.findMany({
                 where: {
                     email: {
-                        not: process.env.NEXT_PUBLIC_ADMIN_EMAIL
+                        not: email
                     }
                 },
-                include: {
-                    receivedMessages: {
-                        select: {
-                            id: true,
-                            content: true,
-                            createdAt: true,
-                            updatedAt: true,
-                            receiverId: true,
-                            senderId: true,
-                        }
-                    },
-                    sentMessages: {
-                        select: {
-                            id: true,
-                            content: true,
-                            createdAt: true,
-                            updatedAt: true,
-                            senderId: true,
-                            receiverId: true,
-                        }
-                    }
-                }
             })
-
-            const result = users.map((user: any) => {
-                    const messages: any = []
-                    user.receivedMessages.map((message:Message) => messages.push({
-                        id: message.id,
-                        content: message.content,
-                        senderId: message.senderId,
-                        receiverId: message.receiverId,
-                        createdAt: message.createdAt,
-                        updatedAt: message.updatedAt,
-                    }))
-
-                    user.sentMessages.map((message:Message) => messages.push({
-                        id: message.id,
-                        content: message.content,
-                        receiverId: message.receiverId,
-                        senderId: message.senderId,
-                        createdAt: message.createdAt,
-                        updatedAt: message.updatedAt,
-
-                    }))
-
-                    const {sentMessages, receivedMessages, ...rest} = user
-                    messages.sort((a:Message, b:Message) => a.createdAt.getTime() - b.createdAt.getTime())
-                    return {...rest, messages}
-                }
-            )
-            socket.emit("usersData", result)
+            socket.emit("usersData", users)
         }
     )
 }
@@ -119,7 +72,7 @@ export const checkUserHandler = (io: Server, socket: Socket) => {
                     email: user.email
                 }
             })
-        if (!userExist) {
+            if (!userExist) {
                 await prisma.user.create({
                     data: {
                         email: user.email,
@@ -146,8 +99,106 @@ export const changeRoomHandler = (io: Server, socket: Socket) => {
 }
 
 export const assignRoomHandler = (io: Server, socket: Socket) => {
-    socket.on("assignRoom",(user) => {
+    socket.on("assignRoom", (user) => {
         console.log(`${socket.id} : ${user.name} connected in room ${user.email}`);
         socket.join(user.email);
     })
+}
+
+
+export const getUserMessagesHandler = (io: Server, socket: Socket) => {
+    socket.on("getUserMessages", async (connectedUser) => {
+
+            let messages: any[] = []
+            const user = await prisma.user.findUnique({
+                    where: {
+                        email: connectedUser.email
+                    }
+                }
+            )
+            if (user) {
+                messages = await prisma.message.findMany({
+                    where: {
+                        OR: [
+                            {
+                                senderId: user.id
+                            },
+                            {
+                                receiverId: user.id
+                            }
+                        ]
+                    },
+                    orderBy: {
+                        createdAt: 'asc'
+                    },
+                    include: {
+                        sender: {
+                            select: {
+                                name: true
+                            }
+                        },
+                        receiver: {
+                            select: {
+                                name: true
+                            }
+                        }
+                    }
+                })
+            }
+            messages.map((message) => {
+                message.sender = message.sender.name
+                message.receiver = message.receiver.name
+            })
+
+            socket.emit("userMessages", messages)
+        }
+    )
+}
+
+export const currentRoomMessagesHandler = (io: Server, socket: Socket) => {
+    socket.on("currentRoomMessages", async (room) => {
+            let messages: any[] = []
+            const user = await prisma.user.findUnique({
+                    where: {
+                        email: room
+                    }
+                }
+            )
+            if (user) {
+                messages = await prisma.message.findMany({
+                    where: {
+                        OR: [
+                            {
+                                senderId: user.id
+                            },
+                            {
+                                receiverId: user.id
+                            }
+                        ]
+                    },
+                    orderBy: {
+                        createdAt: 'asc'
+                    },
+                    include: {
+                        sender: {
+                            select: {
+                                name: true
+                            }
+                        },
+                        receiver: {
+                            select: {
+                                name: true
+                            }
+                        }
+                    }
+                })
+            }
+            messages.map((message) => {
+                message.sender = message.sender.name
+                message.receiver = message.receiver.name
+            })
+
+            socket.emit("roomMessages", messages)
+        }
+    )
 }

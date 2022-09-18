@@ -25,17 +25,25 @@ const Home: NextPage = () => {
             setRoom(session.user.email)
             setUser(session.user)
             socket.emit("assignRoom", session.user)
-            setIsAdmin(session.user.email === process.env.NEXT_PUBLIC_ADMIN_EMAIL)
             socket.emit("checkUser", session.user)
+            if (session.user.email === process.env.NEXT_PUBLIC_ADMIN_EMAIL) {
+                setIsAdmin(true)
+                socket.emit("getUsers", session.user.email)
+                socket.on("usersData", (data) => {
+                    setUsers(data)
+                })
+
+            } else {
+                socket.emit("getUserMessages", session?.user)
+            }
         }
     }, [session, isAdmin])
 
-    if (isAdmin) {
-        socket.emit("getUsers")
-        socket.on("usersData", (data) => {
-            setUsers(data)
-        })
-    }
+
+    socket.on("userMessages", (data) => {
+
+        setMessages(data)
+    })
 
     const changeRoom = (availableUser: any) => {
         setChatWith(availableUser)
@@ -43,6 +51,15 @@ const Home: NextPage = () => {
         socket.emit("changeRoom", availableUser.email)
     }
 
+    useEffect(() => {
+        if (room) {
+            socket.emit("currentRoomMessages", room)
+        }
+    }, [room])
+
+    socket.on("roomMessages", (data) => {
+        setMessages(data)
+    })
 
     function sendMessage() {
         if (session?.user?.email === process.env.NEXT_PUBLIC_ADMIN_EMAIL) {

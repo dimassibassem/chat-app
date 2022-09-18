@@ -1,7 +1,7 @@
 import {
     assignRoomHandler,
     changeRoomHandler,
-    checkUserHandler, disconnectHandler,
+    checkUserHandler, currentRoomMessagesHandler, disconnectHandler, getUserMessagesHandler,
     getUsersHandler,
     messageHandler,
     stopTypingHandler,
@@ -31,6 +31,8 @@ io.on('connection', async (socket: Socket) => {
 
     assignRoomHandler(io, socket);
     checkUserHandler(io, socket);
+    getUserMessagesHandler(io, socket);
+    currentRoomMessagesHandler(io, socket);
     changeRoomHandler(io, socket);
     getUsersHandler(io, socket);
     messageHandler(io, socket);
