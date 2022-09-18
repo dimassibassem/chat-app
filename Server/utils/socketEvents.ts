@@ -35,7 +35,6 @@ export const messageHandler = (io: Server, socket: Socket) => {
             sender: sender?.name || msg.sender,
             receiver: receiver?.name || msg.receiver,
         }
-        console.log(msg.room);
         io.in(msg.room).emit("newIncomingMessage", message);
     });
 };
