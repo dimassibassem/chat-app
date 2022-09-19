@@ -19,29 +19,35 @@ const Home: NextPage = () => {
     const {data: session} = useSession()
     const id = useId()
     const ref = useRef() as LegacyRef<HTMLInputElement> & { current: HTMLDivElement }
+
     useEffect(() => {
         if (session?.user) {
-            // @ts-ignore
-            setRoom(session.user.email)
             setUser(session.user)
-            socket.emit("assignRoom", session.user)
-            socket.emit("checkUser", session.user)
-            if (session.user.email === process.env.NEXT_PUBLIC_ADMIN_EMAIL) {
+            setRoom(session.user.email)
+        }
+    }, [session])
+
+    useEffect(() => {
+        if (user) {
+            socket.emit("assignRoom", user)
+            socket.emit("checkUser", user)
+            if (user.email === process.env.NEXT_PUBLIC_ADMIN_EMAIL) {
                 setIsAdmin(true)
-                socket.emit("getUsers", session.user.email)
+                socket.emit("getUsers", user.email)
                 socket.on("usersData", (data) => {
                     setUsers(data)
                 })
-
             } else {
-                socket.emit("getUserMessages", session?.user)
+                socket.emit("getUserMessages", user)
             }
         }
-    }, [session, isAdmin])
+    }, [user])
 
+    socket.on("newUserConnected", (data) => {
+        setUsers([...users, data])
+    })
 
     socket.on("userMessages", (data) => {
-
         setMessages(data)
     })
 
@@ -60,6 +66,7 @@ const Home: NextPage = () => {
     socket.on("roomMessages", (data) => {
         setMessages(data)
     })
+
 
     function sendMessage() {
         if (session?.user?.email === process.env.NEXT_PUBLIC_ADMIN_EMAIL) {
@@ -86,7 +93,17 @@ const Home: NextPage = () => {
 
     socket.on("newIncomingMessage", async (msg: Message) => {
         setMessages([...messages, msg])
+
+        setUsers(users.map((userElem) => {
+            if (userElem.email === msg.sender.email) {
+                userElem.lastMessage = msg.content
+            }
+            return userElem
+        }
+        ))
+
     })
+
 
     typingHandler(socket, setSomeoneIsTyping)
 
@@ -108,6 +125,9 @@ const Home: NextPage = () => {
                     <div key={availableUser.id} className="flex flex-col items-center justify-center gap-4">
                         {/* @ts-ignore */}
                         <h1 className="text-2xl font-bold">{availableUser.name}</h1>
+                        {availableUser.lastMessage !== "" && (
+                            <h3>{availableUser.received ? availableUser.name : user.name} : {availableUser.lastMessage}</h3>
+                        )}
                         <button type="button" onClick={() => {
                             changeRoom(availableUser)
                         }}>Chat
@@ -131,7 +151,7 @@ const Home: NextPage = () => {
                                             className="w-full py-1 px-2 border-b border-gray-200"
                                             key={`${id + i}`}
                                         >
-                                            {msg.sender} : {msg.content}
+                                            {msg.sender.name} : {msg.content}
                                         </div>
                                     )}
                                     {someoneIsTyping ? <div className="w-full py-1 px-2 border-b border-gray-200">

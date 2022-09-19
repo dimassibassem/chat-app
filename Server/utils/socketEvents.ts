@@ -32,8 +32,8 @@ export const messageHandler = (io: Server, socket: Socket) => {
         }
         const message = {
             content: msg.content,
-            sender: sender?.name || msg.sender,
-            receiver: receiver?.name || msg.receiver,
+            sender: sender || msg.sender,
+            receiver: receiver || msg.receiver,
         }
         io.in(msg.room).emit("newIncomingMessage", message);
     });
@@ -59,7 +59,32 @@ export const getUsersHandler = (io: Server, socket: Socket) => {
                     }
                 },
             })
-            socket.emit("usersData", users)
+            const usersWithLastMessage = await Promise.all(users.map(async (user) => {
+                    const lastMessage = await prisma.message.findFirst({
+                        where: {
+                            OR: [
+                                {
+                                    senderId: user.id,
+                                },
+                                {
+                                    receiverId: user.id
+                                }
+                            ]
+                        },
+                        orderBy: {
+                            createdAt: "desc"
+                        }
+                    })
+                    return {
+                        ...user,
+                        lastMessage: lastMessage?.content || "",
+                        received: lastMessage?.senderId === user.id
+                    }
+                }
+            ))
+
+
+            socket.emit("usersData", usersWithLastMessage)
         }
     )
 }
@@ -71,14 +96,18 @@ export const checkUserHandler = (io: Server, socket: Socket) => {
                     email: user.email
                 }
             })
-            if (!userExist) {
-                await prisma.user.create({
-                    data: {
-                        email: user.email,
-                        name: user.name,
-                        image: user.image
-                    }
-                })
+            try {
+                if (!userExist) {
+                    await prisma.user.create({
+                        data: {
+                            email: user.email,
+                            name: user.name,
+                            image: user.image
+                        }
+                    })
+                    socket.broadcast.emit("newUserConnected", user)
+                }
+            } catch (e) {
             }
         }
     )
@@ -144,11 +173,6 @@ export const getUserMessagesHandler = (io: Server, socket: Socket) => {
                     }
                 })
             }
-            messages.map((message) => {
-                message.sender = message.sender.name
-                message.receiver = message.receiver.name
-            })
-
             socket.emit("userMessages", messages)
         }
     )
@@ -192,10 +216,6 @@ export const currentRoomMessagesHandler = (io: Server, socket: Socket) => {
                     }
                 })
             }
-            messages.map((message) => {
-                message.sender = message.sender.name
-                message.receiver = message.receiver.name
-            })
 
             socket.emit("roomMessages", messages)
         }
