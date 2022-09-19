@@ -32,6 +32,7 @@
     "@typescript-eslint/no-explicit-any": "off",
     "react/no-unescaped-entities": "off",
     "@typescript-eslint/ban-ts-comment": "off",
+    "no-param-reassign": "off",
     "react/jsx-filename-extension": [
       1,
       {

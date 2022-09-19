@@ -5,25 +5,26 @@ import LoginBtn from "@/pages/LoginBtn";
 import {socket} from "@/context/socket";
 import {incomingMessage, outgoingMessage} from "@/audio/audio";
 import {handleKeypress, stopTypingHandler, typingHandler} from "@/utils";
-import {Message, User} from "@/utils/types";
+import {Message} from "@/utils/messageType";
+import {User} from "@/utils/userType";
 
 const Home: NextPage = () => {
     const [message, setMessage] = useState("");
-    const [messages, setMessages] = useState([] as Message[]);
+    const [messages, setMessages] = useState<Message[]>([]);
     const [isAdmin, setIsAdmin] = useState(false);
-    const [user, setUser] = useState();
-    const [users, setUsers] = useState([]);
+    const [user, setUser] = useState<User | null>(null);
+    const [users, setUsers] = useState<User[]>([]);
     const [someoneIsTyping, setSomeoneIsTyping] = useState();
-    const [chatWith, setChatWith] = useState();
-    const [room, setRoom] = useState();
+    const [chatWith, setChatWith] = useState<User | null>(null);
+    const [room, setRoom] = useState<string>();
     const {data: session} = useSession()
     const id = useId()
     const ref = useRef() as LegacyRef<HTMLInputElement> & { current: HTMLDivElement }
 
     useEffect(() => {
         if (session?.user) {
-            setUser(session.user)
-            setRoom(session.user.email)
+            setUser(session.user as User)
+            setRoom(session.user.email as string)
         }
     }, [session])
 
@@ -67,21 +68,17 @@ const Home: NextPage = () => {
         setMessages(data)
     })
 
-
     function sendMessage() {
         if (session?.user?.email === process.env.NEXT_PUBLIC_ADMIN_EMAIL) {
             socket.emit("send_Message", {
-                // @ts-ignore
-                sender: user.email,
-                // @ts-ignore
-                receiver: chatWith.email,
+                sender: user?.email,
+                receiver: chatWith?.email,
                 content: message,
                 room
             },)
         } else {
             socket.emit("send_Message", {
-                // @ts-ignore
-                sender: user.email,
+                sender: user?.email,
                 receiver: process.env.NEXT_PUBLIC_ADMIN_EMAIL,
                 content: message,
                 room
@@ -95,11 +92,11 @@ const Home: NextPage = () => {
         setMessages([...messages, msg])
 
         setUsers(users.map((userElem) => {
-            if (userElem.email === msg.sender.email) {
-                userElem.lastMessage = msg.content
+                if (userElem.email === msg.sender?.email) {
+                    userElem.lastMessage = msg.content
+                }
+                return userElem
             }
-            return userElem
-        }
         ))
 
     })
@@ -126,7 +123,7 @@ const Home: NextPage = () => {
                         {/* @ts-ignore */}
                         <h1 className="text-2xl font-bold">{availableUser.name}</h1>
                         {availableUser.lastMessage !== "" && (
-                            <h3>{availableUser.received ? availableUser.name : user.name} : {availableUser.lastMessage}</h3>
+                            <h3>{availableUser.received ? availableUser.name : user?.name} : {availableUser.lastMessage}</h3>
                         )}
                         <button type="button" onClick={() => {
                             changeRoom(availableUser)
@@ -151,7 +148,7 @@ const Home: NextPage = () => {
                                             className="w-full py-1 px-2 border-b border-gray-200"
                                             key={`${id + i}`}
                                         >
-                                            {msg.sender.name} : {msg.content}
+                                            {msg.sender?.name} : {msg.content}
                                         </div>
                                     )}
                                     {someoneIsTyping ? <div className="w-full py-1 px-2 border-b border-gray-200">
