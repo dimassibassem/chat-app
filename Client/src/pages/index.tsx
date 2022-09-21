@@ -89,7 +89,6 @@ const Home: NextPage = () => {
     }
 
     socket.on("newIncomingMessage", async (msg: Message) => {
-            console.log("msg")
             setMessages([...messages, msg])
 
             setUsers(users.map((userElem) => {
