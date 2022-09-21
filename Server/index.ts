@@ -28,7 +28,7 @@ const io = new Server(server, {
 });
 
 io.on('connection', async (socket: Socket) => {
-
+    console.log('a user connected');
     assignRoomHandler(io, socket);
     checkUserHandler(io, socket);
     getUserMessagesHandler(io, socket);

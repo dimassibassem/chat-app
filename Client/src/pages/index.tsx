@@ -2,17 +2,21 @@ import React, {LegacyRef, useEffect, useId, useRef, useState} from 'react';
 import {NextPage} from "next";
 import {useSession} from "next-auth/react";
 import LoginBtn from "@/pages/LoginBtn";
-import {socket} from "@/context/socket";
-import {incomingMessage, outgoingMessage} from "@/audio/audio";
-import {handleKeypress, stopTypingHandler, typingHandler} from "@/utils";
+import {incomingMessage} from "@/audio/audio";
+import {changeRoom, handleKeypress, sendMessageFunction} from "@/utils";
+import {
+    globalSocketListeners,
+    usersDataListener
+} from "@/utils/socketListener";
 import {Message} from "@/utils/messageType";
 import {User} from "@/utils/userType";
+import useSocket from "@/hooks/useSocket";
 
 const Home: NextPage = () => {
     const [message, setMessage] = useState("");
     const [messages, setMessages] = useState<Message[]>([]);
     const [isAdmin, setIsAdmin] = useState(false);
-    const [user, setUser] = useState<User>();
+    const [user, setUser] = useState<User | undefined>();
     const [users, setUsers] = useState<User[]>([]);
     const [someoneIsTyping, setSomeoneIsTyping] = useState();
     const [chatWith, setChatWith] = useState<User | null>(null);
@@ -20,6 +24,16 @@ const Home: NextPage = () => {
     const {data: session} = useSession()
     const id = useId()
     const ref = useRef() as LegacyRef<HTMLInputElement> & { current: HTMLDivElement }
+
+    const socket = useSocket('ws://localhost:3001', {
+        reconnectionAttempts: 5,
+        reconnectionDelay: 1000,
+        autoConnect: false
+    });
+
+    useEffect(() => {
+        socket.connect();
+    }, []);
 
     useEffect(() => {
         if (session?.user) {
@@ -35,28 +49,12 @@ const Home: NextPage = () => {
             if (user.email === process.env.NEXT_PUBLIC_ADMIN_EMAIL) {
                 setIsAdmin(true)
                 socket.emit("getUsers", user.email)
-                socket.on("usersData", (data) => {
-                    setUsers(data)
-                })
+                usersDataListener(socket, setUsers)
             } else {
                 socket.emit("getUserMessages", user)
             }
         }
     }, [user])
-
-    socket.on("newUserConnected", (data) => {
-        setUsers([...users, data])
-    })
-
-    socket.on("userMessages", (data) => {
-        setMessages(data)
-    })
-
-    const changeRoom = (availableUser: any) => {
-        setChatWith(availableUser)
-        setRoom(availableUser.email)
-        socket.emit("changeRoom", availableUser.email)
-    }
 
     useEffect(() => {
         if (room) {
@@ -64,66 +62,18 @@ const Home: NextPage = () => {
         }
     }, [room])
 
-    socket.on("roomMessages", (data) => {
-        setMessages(data)
-    })
-
-    function sendMessage() {
-        if (session?.user?.email === process.env.NEXT_PUBLIC_ADMIN_EMAIL) {
-            socket.emit("send_Message", {
-                sender: user?.email,
-                receiver: chatWith?.email,
-                content: message,
-                room
-            })
-        } else {
-            socket.emit("send_Message", {
-                sender: user?.email,
-                receiver: process.env.NEXT_PUBLIC_ADMIN_EMAIL,
-                content: message,
-                room
-            })
-        }
-    outgoingMessage()
-        setMessage("")
-    }
-
-    socket.on("newIncomingMessage", async (msg: Message) => {
-            setMessages([...messages, msg])
-
-            setUsers(users.map((userElem) => {
-                    if (user.email === msg.sender?.email && msg.receiver?.email === userElem.email) {
-                        userElem.lastMessage = msg.content
-                        userElem.received = false
-                    }
-                    if (user.email === msg.receiver?.email && msg.sender?.email === userElem.email) {
-                        userElem.lastMessage = msg.content
-                        userElem.received = true
-                    }
-                    return userElem
-                }
-            ))
-        }
-    )
-
-
-    typingHandler(socket, setSomeoneIsTyping)
-
-    // @ts-ignore
-    stopTypingHandler(socket, setSomeoneIsTyping)
-
-
-    function handleKeypressFunction(e: KeyboardEvent) {
-        // @ts-ignore
-        handleKeypress(e, user, socket, message, sendMessage, room)
-    }
-
-
     useEffect(() => {
         if (messages[messages.length - 1]?.receiver?.email === user?.email) {
             incomingMessage()
         }
     }, [messages, user])
+
+    globalSocketListeners(socket, users, setUsers, setSomeoneIsTyping, setMessages, messages, user)
+
+    function handleKeypressFunction(e: KeyboardEvent) {
+        handleKeypress(e, user, socket, message, room, session, setMessages, chatWith, setMessage)
+    }
+
 
     return (
         <div className="flex items-center p-4 mx-auto min-h-screen justify-center bg-purple-500">
@@ -136,7 +86,7 @@ const Home: NextPage = () => {
                             <h3>{availableUser.received ? availableUser.name : user?.name} : {availableUser.lastMessage}</h3>
                         )}
                         <button type="button" onClick={() => {
-                            changeRoom(availableUser)
+                            changeRoom(availableUser, setChatWith, setRoom, socket)
                         }}>Chat
                         </button>
                     </div>
@@ -183,7 +133,7 @@ const Home: NextPage = () => {
                                             type="button"
                                             className="group-hover:text-white px-3 h-full"
                                             onClick={() => {
-                                                sendMessage();
+                                                sendMessageFunction(session, socket, user, message, room, setMessages, chatWith, setMessage)
                                             }}
                                         >
                                             Send
