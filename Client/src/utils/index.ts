@@ -1,5 +1,5 @@
 import {Socket} from "socket.io-client";
-import {Message, User} from "@/utils/types";
+import {User} from "@/utils/userType";
 
 export function typingHandler(socket: Socket, setSomeoneIsTyping: any) {
 

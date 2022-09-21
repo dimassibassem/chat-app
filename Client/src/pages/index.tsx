@@ -12,11 +12,11 @@ const Home: NextPage = () => {
     const [message, setMessage] = useState("");
     const [messages, setMessages] = useState<Message[]>([]);
     const [isAdmin, setIsAdmin] = useState(false);
-    const [user, setUser] = useState<User | null>(null);
+    const [user, setUser] = useState<User>();
     const [users, setUsers] = useState<User[]>([]);
     const [someoneIsTyping, setSomeoneIsTyping] = useState();
     const [chatWith, setChatWith] = useState<User | null>(null);
-    const [room, setRoom] = useState<string>();
+    const [room, setRoom] = useState<string>("");
     const {data: session} = useSession()
     const id = useId()
     const ref = useRef() as LegacyRef<HTMLInputElement> & { current: HTMLDivElement }
@@ -75,7 +75,7 @@ const Home: NextPage = () => {
                 receiver: chatWith?.email,
                 content: message,
                 room
-            },)
+            })
         } else {
             socket.emit("send_Message", {
                 sender: user?.email,
@@ -89,17 +89,23 @@ const Home: NextPage = () => {
     }
 
     socket.on("newIncomingMessage", async (msg: Message) => {
-        setMessages([...messages, msg])
+            console.log("msg")
+            setMessages([...messages, msg])
 
-        setUsers(users.map((userElem) => {
-                if (userElem.email === msg.sender?.email) {
-                    userElem.lastMessage = msg.content
+            setUsers(users.map((userElem) => {
+                    if (user.email === msg.sender?.email && msg.receiver?.email === userElem.email) {
+                        userElem.lastMessage = msg.content
+                        userElem.received = false
+                    }
+                    if (user.email === msg.receiver?.email && msg.sender?.email === userElem.email) {
+                        userElem.lastMessage = msg.content
+                        userElem.received = true
+                    }
+                    return userElem
                 }
-                return userElem
-            }
-        ))
-
-    })
+            ))
+        }
+    )
 
 
     typingHandler(socket, setSomeoneIsTyping)
@@ -118,9 +124,7 @@ const Home: NextPage = () => {
             <main className="gap-4 flex flex-col items-center justify-center w-full h-full">
                 <LoginBtn/>
                 {isAdmin && users.map((availableUser) => (
-                    // @ts-ignore
                     <div key={availableUser.id} className="flex flex-col items-center justify-center gap-4">
-                        {/* @ts-ignore */}
                         <h1 className="text-2xl font-bold">{availableUser.name}</h1>
                         {availableUser.lastMessage !== "" && (
                             <h3>{availableUser.received ? availableUser.name : user?.name} : {availableUser.lastMessage}</h3>
@@ -136,7 +140,6 @@ const Home: NextPage = () => {
                 {user ? (
                     <>
                         <p className="font-bold text-white text-xl">
-                            {/* @ts-ignore */}
                             Your username: {user.name}
                         </p>
                         {!isAdmin || chatWith ?
