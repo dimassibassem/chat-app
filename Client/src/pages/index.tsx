@@ -84,7 +84,7 @@ const Home: NextPage = () => {
                 room
             })
         }
-        // outgoingMessage()
+    outgoingMessage()
         setMessage("")
     }
 
@@ -118,6 +118,13 @@ const Home: NextPage = () => {
         // @ts-ignore
         handleKeypress(e, user, socket, message, sendMessage, room)
     }
+
+
+    useEffect(() => {
+        if (messages[messages.length - 1]?.receiver?.email === user?.email) {
+            incomingMessage()
+        }
+    }, [messages, user])
 
     return (
         <div className="flex items-center p-4 mx-auto min-h-screen justify-center bg-purple-500">
