@@ -68,12 +68,11 @@ const Home: NextPage = () => {
         }
     }, [messages, user])
 
-    globalSocketListeners(socket, users, setUsers, setSomeoneIsTyping, setMessages, messages, user)
-
     function handleKeypressFunction(e: KeyboardEvent) {
         handleKeypress(e, user, socket, message, room, session, setMessages, chatWith, setMessage)
     }
 
+    globalSocketListeners(socket, users, setUsers, setSomeoneIsTyping, setMessages, messages, user)
 
     return (
         <div className="flex items-center p-4 mx-auto min-h-screen justify-center bg-purple-500">
